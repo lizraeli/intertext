@@ -1,5 +1,6 @@
 import sys
 import os
+import re
 import time
 from typing import List
 from dotenv import load_dotenv
@@ -22,11 +23,86 @@ client = OpenAI()
 # ==========================================
 
 
+def clean_text(text: str) -> str:
+    # 1. Replace single newlines with a space (removes hard wrapping)
+    # (?<!\n) means "not preceded by a newline"
+    # (?!\n) means "not followed by a newline"
+    cleaned_text = re.sub(r"(?<!\n)\n(?!\n)", " ", text)
+
+    # 2. Collapse multiple spaces into a single space just to be tidy
+    cleaned_text = re.sub(r"[ \t]+", " ", cleaned_text)
+
+    return cleaned_text
+
+
+def get_chapter_blocks(
+    raw_text: str, max_words: int = 5000, overlap_words: int = 250
+) -> list[dict]:
+    """
+    Attempts to split the novel by chapter headings. If no chapters are found,
+    it automatically falls back to sliding-window macro-chunking.
+    """
+    # Relaxed Regex: allows leading spaces/BOMs (\s*), makes it case-insensitive,
+    # and doesn't strictly demand a newline at the end.
+    pattern = re.compile(
+        r"^\s*(CHAPTER\s+[A-Z0-9IVXLCM]+)", re.MULTILINE | re.IGNORECASE
+    )
+    matches = list(pattern.finditer(raw_text))
+    blocks = []
+
+    # ==========================================
+    # THE FALLBACK: No chapters found
+    # ==========================================
+    if not matches:
+        print(
+            "     ⚠️ No standard chapters found. Falling back to sliding-window macro-chunking."
+        )
+        words = raw_text.split()
+        step_size = max_words - overlap_words
+
+        for i in range(0, len(words), step_size):
+            window = words[i : i + max_words]
+            blocks.append({"chapter": "Continuous Text", "text": " ".join(window)})
+        return blocks
+
+    # ==========================================
+    # THE PRIMARY: Chapters were found
+    # ==========================================
+    for i, match in enumerate(matches):
+        # We use group(1) to grab just the "CHAPTER X" part, ignoring any matched spaces
+        chapter_title = match.group(1).strip()
+
+        # The text starts after the entire matched line
+        start_idx = match.end()
+        end_idx = matches[i + 1].start() if i + 1 < len(matches) else len(raw_text)
+
+        chapter_text = raw_text[start_idx:end_idx].strip()
+
+        # Skip empty chapters (sometimes caused by weird formatting)
+        if not chapter_text:
+            continue
+
+        blocks.append({"chapter": chapter_title, "text": clean_text(chapter_text)})
+
+    return blocks
+
+
 def create_macro_chunks(
     raw_text: str, max_words: int = 5000, overlap_words: int = 250
 ) -> List[str]:
     """Slices a massive text into overlapping macro blocks for the embedding model."""
-    words = raw_text.split()
+    # --- TEXT CLEANING STEP ---
+
+    # 1. Replace single newlines with a space (removes hard wrapping)
+    # (?<!\n) means "not preceded by a newline"
+    # (?!\n) means "not followed by a newline"
+    cleaned_text = re.sub(r"(?<!\n)\n(?!\n)", " ", raw_text)
+
+    # 2. Collapse multiple spaces into a single space just to be tidy
+    cleaned_text = re.sub(r"[ \t]+", " ", cleaned_text)
+    # ----------------------------------
+
+    words = cleaned_text.split()
     return [
         " ".join(words[i : i + max_words])
         for i in range(0, len(words), max_words - overlap_words)
@@ -87,24 +163,24 @@ def ingest_book_to_supabase(file_path: str, title: str, author: str, year: int):
         db.flush()  # Gets the novel_record.id without committing the transaction yet
 
         # 4. Process the Text
-        macro_blocks = create_macro_chunks(full_text)
+        chapter_blocks = get_chapter_blocks(full_text)
         print(
-            f"Generated {len(macro_blocks)} macro-blocks. Beginning processing pipeline..."
+            f"Generated {len(chapter_blocks)} chapter-blocks. Beginning processing pipeline..."
         )
 
         total_segments_processed = 0
         start_time = time.time()
 
-        for block_index, macro_text in enumerate(macro_blocks):
-            print(f"  -> Processing Block {block_index + 1}/{len(macro_blocks)}...")
+        for block_index, chapter_data in enumerate(chapter_blocks):
+            print(f"  -> Processing Block {block_index + 1}/{len(chapter_blocks)}...")
 
             # Chonkie performs the Late Chunking math
-            segments = chunker(macro_text)
+            segments = chunker(chapter_data["text"])
 
-            db_segments_to_insert = []
             for segment in segments:
                 # Ask OpenAI for the themes, mood, characters, and setting
                 metadata_json = extract_metadata(segment.text)
+                metadata_json["chapter"] = chapter_data["chapter"]
 
                 # Create the SQLAlchemy object
                 db_seg = NovelSegment(
@@ -115,17 +191,14 @@ def ingest_book_to_supabase(file_path: str, title: str, author: str, year: int):
                     metadata_col=metadata_json,
                     embedding=segment.embedding.tolist(),
                 )
-                db_segments_to_insert.append(db_seg)
                 total_segments_processed += 1
 
                 # Add the segments for this specific block
-                db.add_all(db_segments_to_insert)
+                db.add(db_seg)
 
                 # Commit immediately to flush them to Supabase and clear local RAM
                 db.commit()
-                print(
-                    f"     Committed {len(db_segments_to_insert)} segments to database."
-                )
+                print(f"     Committed segment {db_seg.id} to database.")
 
         elapsed = time.time() - start_time
         print(f"\nSuccess! '{title}' ingested.")
