@@ -1,0 +1,1 @@
+PYTHONPATH=. python scripts/ingest_novel.py

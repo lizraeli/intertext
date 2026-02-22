@@ -1,0 +1,1 @@
+PYTHONPATH=. python scripts/delete_novel.py "$1"
