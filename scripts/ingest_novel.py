@@ -20,7 +20,7 @@ load_dotenv()
 # Initialize OpenAI Client (automatically picks up OPENAI_API_KEY from the environment)
 client = OpenAI()
 
-openai_embeddings = OpenAIEmbeddings(model="text-embedding-3-large", dimension=768)
+openai_embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
 
 
 def clean_text(text: str) -> str:

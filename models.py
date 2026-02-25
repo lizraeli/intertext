@@ -28,6 +28,6 @@ class NovelSegment(Base):
     content = Column(Text, nullable=False)
     token_count = Column(Integer, nullable=False)
     metadata_col = Column("metadata", JSONB, nullable=False)
-    embedding = Column(Vector(768))
+    embedding = Column(Vector(3072))
 
     novel = relationship("Novel", back_populates="segments")
