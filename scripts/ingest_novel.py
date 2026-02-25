@@ -1,12 +1,14 @@
-import sys
-import os
 import re
 import time
 from typing import List
 from dotenv import load_dotenv
 
 from openai import OpenAI
-from chonkie import LateChunker
+from chonkie import SemanticChunker
+from chonkie.embeddings import OpenAIEmbeddings
+
+
+from sqlalchemy import func
 
 from database import SessionLocal
 from models import Novel, NovelSegment
@@ -18,9 +20,7 @@ load_dotenv()
 # Initialize OpenAI Client (automatically picks up OPENAI_API_KEY from the environment)
 client = OpenAI()
 
-# ==========================================
-# 2. PROCESSING PIPELINE FUNCTIONS
-# ==========================================
+openai_embeddings = OpenAIEmbeddings(model="text-embedding-3-large", dimension=768)
 
 
 def clean_text(text: str) -> str:
@@ -42,32 +42,25 @@ def get_chapter_blocks(
     Attempts to split the novel by chapter headings. If no chapters are found,
     it automatically falls back to sliding-window macro-chunking.
     """
-    # Relaxed Regex: allows leading spaces/BOMs (\s*), makes it case-insensitive,
-    # and doesn't strictly demand a newline at the end.
     pattern = re.compile(
-        r"^\s*(CHAPTER\s+[A-Z0-9IVXLCM]+)", re.MULTILINE | re.IGNORECASE
+        r"^\s*(?:#{1,3}\s+)?(CHAPTER\s+[A-Z0-9IVXLCM]+[^\n]*)",
+        re.MULTILINE | re.IGNORECASE,
     )
     matches = list(pattern.finditer(raw_text))
     blocks = []
 
-    # ==========================================
-    # THE FALLBACK: No chapters found
-    # ==========================================
+    # Fallback: No chapters found
+
     if not matches:
-        print(
-            "     ⚠️ No standard chapters found. Falling back to sliding-window macro-chunking."
-        )
-        words = raw_text.split()
-        step_size = max_words - overlap_words
+        return [
+            {"chapter": "Continuous Text", "text": chunk}
+            for chunk in create_macro_chunks(
+                raw_text, max_words=max_words, overlap_words=overlap_words
+            )
+        ]
 
-        for i in range(0, len(words), step_size):
-            window = words[i : i + max_words]
-            blocks.append({"chapter": "Continuous Text", "text": " ".join(window)})
-        return blocks
+    # Primary: Chapters were found
 
-    # ==========================================
-    # THE PRIMARY: Chapters were found
-    # ==========================================
     for i, match in enumerate(matches):
         # We use group(1) to grab just the "CHAPTER X" part, ignoring any matched spaces
         chapter_title = match.group(1).strip()
@@ -87,26 +80,66 @@ def get_chapter_blocks(
     return blocks
 
 
+_ABBREVIATIONS = frozenset(
+    {
+        "mr.",
+        "mrs.",
+        "ms.",
+        "dr.",
+        "st.",
+        "prof.",
+        "rev.",
+        "sr.",
+        "jr.",
+        "etc.",
+        "vs.",
+        "vol.",
+        "no.",
+        "gen.",
+        "col.",
+        "lt.",
+        "sgt.",
+        "capt.",
+        "govt.",
+        "approx.",
+        "fig.",
+        "inc.",
+        "ltd.",
+        "dept.",
+    }
+)
+
+
+def _is_sentence_end(token: str) -> bool:
+    word = token.rstrip()
+    if not word or word[-1] not in ".!?\"'":
+        return False
+    core = word.rstrip("\"'\u2018\u2019\u201c\u201d")
+    if core.lower() in _ABBREVIATIONS:
+        return False
+    return True
+
+
 def create_macro_chunks(
-    raw_text: str, max_words: int = 5000, overlap_words: int = 250
+    text: str, max_words: int = 5000, overlap_words: int = 250
 ) -> List[str]:
-    """Slices a massive text into overlapping macro blocks for the embedding model."""
-    # --- TEXT CLEANING STEP ---
+    """Slices a massive text into overlapping macro blocks, splitting at sentence boundaries."""
+    tokens = re.findall(r"\S+\s*", text)
+    step = max_words - overlap_words
+    chunks = []
 
-    # 1. Replace single newlines with a space (removes hard wrapping)
-    # (?<!\n) means "not preceded by a newline"
-    # (?!\n) means "not followed by a newline"
-    cleaned_text = re.sub(r"(?<!\n)\n(?!\n)", " ", raw_text)
+    for i in range(0, len(tokens), step):
+        end = min(i + max_words, len(tokens))
 
-    # 2. Collapse multiple spaces into a single space just to be tidy
-    cleaned_text = re.sub(r"[ \t]+", " ", cleaned_text)
-    # ----------------------------------
+        if end < len(tokens):
+            for j in range(end - 1, max(i, end - 200) - 1, -1):
+                if _is_sentence_end(tokens[j]):
+                    end = j + 1
+                    break
 
-    words = cleaned_text.split()
-    return [
-        " ".join(words[i : i + max_words])
-        for i in range(0, len(words), max_words - overlap_words)
-    ]
+        chunks.append("".join(tokens[i:end]).strip())
+
+    return chunks
 
 
 def extract_metadata(chunk_text: str) -> dict:
@@ -126,41 +159,50 @@ def extract_metadata(chunk_text: str) -> dict:
     return completion.choices[0].message.parsed.model_dump()
 
 
-# ==========================================
-# 3. MAIN INGESTION ORCHESTRATOR
-# ==========================================
-
-
 def ingest_book_to_supabase(file_path: str, title: str, author: str, year: int):
-    # 1. Read the raw text
     print(f"Reading '{title}'...")
     with open(file_path, "r", encoding="utf-8") as f:
         full_text = f.read()
 
-    # 2. Initialize the AI Models
-    print("Loading Nomic Embedding Model & Chonkie...")
-    chunker = LateChunker(
-        embedding_model="nomic-ai/nomic-embed-text-v1.5",
+    chunker = SemanticChunker(
+        embedding_model=openai_embeddings,
         chunk_size=512,
-        min_characters_per_chunk=50,
-        trust_remote_code=True,
+        min_sentences_per_chunk=5,
+        similarity_window=8,
+        filter_tolerance=0.4,
+        threshold=0.99,
+        delim=["\n\n"],
     )
 
-    # 3. Create the Database Session
     db = SessionLocal()
     try:
-        # Check if novel already exists to prevent duplication
-        existing_novel = db.query(Novel).filter(Novel.title == title).first()
-        if existing_novel:
-            print(
-                f"Novel '{title}' already exists in the database. Aborting to prevent duplicates."
-            )
-            return
+        # Find or create the novel record to support resuming
+        novel_record = db.query(Novel).filter(Novel.title == title).first()
+        resume_from_block = 0
 
-        # Create the Parent Record
-        novel_record = Novel(title=title, author=author, publication_year=year)
-        db.add(novel_record)
-        db.flush()  # Gets the novel_record.id without committing the transaction yet
+        if novel_record:
+            max_block = (
+                db.query(func.max(NovelSegment.macro_block_id))
+                .filter(NovelSegment.novel_id == novel_record.id)
+                .scalar()
+            )
+
+            if max_block is not None:
+                # Delete segments from the last block (may be incomplete)
+                db.query(NovelSegment).filter(
+                    NovelSegment.novel_id == novel_record.id,
+                    NovelSegment.macro_block_id == max_block,
+                ).delete()
+                db.commit()
+                resume_from_block = max_block
+                print(f"Resuming from block {resume_from_block} (0-indexed)...")
+            else:
+                print(f"Novel '{title}' exists but has no segments. Starting fresh...")
+        else:
+            novel_record = Novel(title=title, author=author, publication_year=year)
+            db.add(novel_record)
+            db.flush()
+            db.commit()
 
         # 4. Process the Text
         chapter_blocks = get_chapter_blocks(full_text)
@@ -172,31 +214,37 @@ def ingest_book_to_supabase(file_path: str, title: str, author: str, year: int):
         start_time = time.time()
 
         for block_index, chapter_data in enumerate(chapter_blocks):
-            print(f"  -> Processing Block {block_index + 1}/{len(chapter_blocks)}...")
+            if block_index < resume_from_block:
+                print(
+                    f"  -> Skipping Chapter {chapter_data["chapter"]}/{len(chapter_blocks)} (already ingested)"
+                )
+                continue
 
-            # Chonkie performs the Late Chunking math
+            print(
+                f"  -> Processing Chapter {chapter_data["chapter"]}/{len(chapter_blocks)}..."
+            )
+
             segments = chunker(chapter_data["text"])
 
+            print(f"     Generated {len(segments)} semantic segments.")
+
             for segment in segments:
-                # Ask OpenAI for the themes, mood, characters, and setting
                 metadata_json = extract_metadata(segment.text)
                 metadata_json["chapter"] = chapter_data["chapter"]
 
-                # Create the SQLAlchemy object
+                embedding_vector = openai_embeddings.embed(segment.text)
+
                 db_seg = NovelSegment(
                     novel_id=novel_record.id,
                     macro_block_id=block_index,
                     content=segment.text.strip(),
                     token_count=segment.token_count,
                     metadata_col=metadata_json,
-                    embedding=segment.embedding.tolist(),
+                    embedding=embedding_vector,
                 )
                 total_segments_processed += 1
 
-                # Add the segments for this specific block
                 db.add(db_seg)
-
-                # Commit immediately to flush them to Supabase and clear local RAM
                 db.commit()
                 print(f"     Committed segment {db_seg.id} to database.")
 
@@ -213,10 +261,11 @@ def ingest_book_to_supabase(file_path: str, title: str, author: str, year: int):
         db.close()
 
 
-# ==========================================
 # 4. EXECUTION
-# ==========================================
 if __name__ == "__main__":
-    ingest_book_to_supabase(
-        "books/jane_eyre.txt", "Jane Eyre", "Charlotte Brontë", 1847
-    )
+    file_name = input("File name in the books folder (e.g. jane_eyre.md): ").strip()
+    title = input("Title: ").strip()
+    author = input("Author: ").strip()
+    year = int(input("Publication year: ").strip())
+
+    ingest_book_to_supabase(f"books/{file_name}", title, author, year)

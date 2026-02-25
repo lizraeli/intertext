@@ -3,9 +3,24 @@ from typing import List, Optional
 
 
 # --- Ingestion Schemas (For OpenAI) ---
+class ThemeAnnotation(BaseModel):
+    name: str = Field(
+        description="The theme name (e.g., 'isolation', 'revenge', 'class struggle')."
+    )
+    intensity: float = Field(
+        description="Score from 0.0 to 1.0: 0.1 means faintly present in the background, 1.0 means the overwhelming central concern of the passage."
+    )
+    tone: float = Field(
+        description="Score from -1.0 to 1.0: -1.0 is the darkest or most painful expression of the theme, 0.0 is neutral or ambivalent, 1.0 is the most hopeful or transcendent expression."
+    )
+    manifestation: str = Field(
+        description="A single sentence describing how this theme concretely manifests in this specific passage — not a general definition, but what the author actually does with it here."
+    )
+
+
 class ChunkMetadata(BaseModel):
-    primary_themes: list[str] = Field(
-        description="Top 2 to 3 overarching literary themes (e.g., 'isolation', 'revenge')."
+    primary_themes: list[ThemeAnnotation] = Field(
+        description="The top 2 to 3 overarching literary themes in this passage."
     )
     characters: list[str] = Field(
         description="Names of characters actively participating or mentioned."
@@ -22,7 +37,7 @@ class ChunkMetadata(BaseModel):
 class SegmentResponse(BaseModel):
     id: int
     content: str
-    themes: list[str]
+    themes: list[ThemeAnnotation]
 
     class Config:
         from_attributes = True
