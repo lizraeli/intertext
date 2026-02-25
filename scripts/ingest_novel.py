@@ -167,7 +167,7 @@ def ingest_book_to_supabase(file_path: str, title: str, author: str, year: int):
     chunker = SemanticChunker(
         embedding_model=openai_embeddings,
         chunk_size=512,
-        min_sentences_per_chunk=5,
+        min_sentences_per_chunk=3,
         similarity_window=8,
         filter_tolerance=0.4,
         threshold=0.99,
@@ -263,9 +263,11 @@ def ingest_book_to_supabase(file_path: str, title: str, author: str, year: int):
 
 # 4. EXECUTION
 if __name__ == "__main__":
-    file_name = input("File name in the books folder (e.g. jane_eyre.md): ").strip()
-    title = input("Title: ").strip()
-    author = input("Author: ").strip()
-    year = int(input("Publication year: ").strip())
+    import json
 
-    ingest_book_to_supabase(f"books/{file_name}", title, author, year)
+    with open("scripts/ingest_novel_inputs.json", "r") as f:
+        inputs = json.load(f)
+
+    ingest_book_to_supabase(
+        inputs["file_path"], inputs["title"], inputs["author"], inputs["year"]
+    )
