@@ -231,12 +231,13 @@ def ingest_book_to_supabase(file_path: str, title: str, author: str, year: int):
             for segment in segments:
                 metadata_json = extract_metadata(segment.text)
                 metadata_json["chapter"] = chapter_data["chapter"]
-
                 embedding_vector = openai_embeddings.embed(segment.text)
 
                 db_seg = NovelSegment(
                     novel_id=novel_record.id,
                     macro_block_id=block_index,
+                    start_index=segment.start_index,
+                    end_index=segment.end_index,
                     content=segment.text.strip(),
                     token_count=segment.token_count,
                     metadata_col=metadata_json,

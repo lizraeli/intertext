@@ -25,6 +25,8 @@ class NovelSegment(Base):
     novel_id = Column(Integer, ForeignKey("novels.id"), nullable=False, index=True)
 
     macro_block_id = Column(Integer, nullable=False)
+    start_index = Column(Integer, nullable=False)
+    end_index = Column(Integer, nullable=False)
     content = Column(Text, nullable=False)
     token_count = Column(Integer, nullable=False)
     metadata_col = Column("metadata", JSONB, nullable=False)
