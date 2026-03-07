@@ -43,8 +43,8 @@ def get_chapter_blocks(
     it automatically falls back to sliding-window macro-chunking.
     """
     pattern = re.compile(
-        r"^\s*(?:#{1,3}\s+)?(CHAPTER\s+[A-Z0-9IVXLCM]+[^\n]*)",
-        re.MULTILINE | re.IGNORECASE,
+        r"^\s*(#{1,3}\s+[^\n]+)",
+        re.MULTILINE,
     )
     matches = list(pattern.finditer(raw_text))
     blocks = []
@@ -63,7 +63,7 @@ def get_chapter_blocks(
 
     for i, match in enumerate(matches):
         # We use group(1) to grab just the "CHAPTER X" part, ignoring any matched spaces
-        chapter_title = match.group(1).strip()
+        chapter_title = match.group(1).strip().lstrip("#").strip()
 
         # The text starts after the entire matched line
         start_idx = match.end()
@@ -154,7 +154,7 @@ def extract_metadata(chunk_text: str) -> dict:
             {"role": "user", "content": chunk_text},
         ],
         response_format=ChunkMetadata,
-        temperature=0.1,
+        temperature=0.4,
     )
     return completion.choices[0].message.parsed.model_dump()
 

@@ -14,7 +14,7 @@ class ThemeAnnotation(BaseModel):
         description="Score from -1.0 to 1.0: -1.0 is the darkest or most painful expression of the theme, 0.0 is neutral or ambivalent, 1.0 is the most hopeful or transcendent expression."
     )
     manifestation: str = Field(
-        description="A single sentence describing how this theme concretely manifests in this specific passage — not a general definition, but what the author actually does with it here."
+        description="Write a single sentence describing how this theme concretely manifests in this specific passage. This sentence must be specific enough that a reader who has not seen the passage can form a vivid visual or emotional impression from it alone. Do NOT write a sentence that could apply to any passage with this theme — do not restate the keyword or write a general observation. Describe what the author actually does: the specific image, action, voice, or detail through which the theme appears."
     )
 
 
