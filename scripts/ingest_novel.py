@@ -142,6 +142,56 @@ def create_macro_chunks(
     return chunks
 
 
+def parse_header_from_markdown(full_text: str) -> tuple[str, str, int, str]:
+    """
+    Parse # Title:, ## Author:, ## Year: from the top of the file.
+    Returns (title, author, year, body). Body is everything after the header.
+    Raises ValueError if any required header line is missing.
+    """
+    lines = full_text.split("\n")
+    title: str | None = None
+    author: str | None = None
+    year: int | None = None
+    last_metadata_line = -1
+
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        m = re.match(r"^#\s*Title:\s*(.+)$", stripped)
+        if m:
+            title = m.group(1).strip()
+            last_metadata_line = i
+            continue
+        m = re.match(r"^##\s*Author:\s*(.+)$", stripped)
+        if m:
+            author = m.group(1).strip()
+            last_metadata_line = i
+            continue
+        m = re.match(r"^##\s*Year:\s*(\d+)$", stripped)
+        if m:
+            year = int(m.group(1))
+            last_metadata_line = i
+            continue
+
+    if title is None:
+        raise ValueError("Missing required header line: # Title: ...")
+    if author is None:
+        raise ValueError("Missing required header line: ## Author: ...")
+    if year is None:
+        raise ValueError("Missing required header line: ## Year: ...")
+
+    # Body starts after the last metadata line; skip optional blank lines and a dash-only line
+    body_lines = lines[last_metadata_line + 1 :]
+    start = 0
+    while start < len(body_lines) and body_lines[start].strip() == "":
+        start += 1
+    if start < len(body_lines) and re.match(r"^[-]+$", body_lines[start].strip()):
+        start += 1
+    while start < len(body_lines) and body_lines[start].strip() == "":
+        start += 1
+    body = "\n".join(body_lines[start:])
+    return (title, author, year, body)
+
+
 def extract_metadata(chunk_text: str) -> dict:
     """Passes text to OpenAI gpt-4o-mini to extract structured JSON metadata."""
     completion = client.beta.chat.completions.parse(
@@ -159,11 +209,8 @@ def extract_metadata(chunk_text: str) -> dict:
     return completion.choices[0].message.parsed.model_dump()
 
 
-def ingest_book_to_supabase(file_path: str, title: str, author: str, year: int):
-    print(f"Reading '{title}'...")
-    with open(file_path, "r", encoding="utf-8") as f:
-        full_text = f.read()
-
+def ingest_book_to_supabase(body_text: str, title: str, author: str, year: int):
+    print(f"Ingesting '{title}'...")
     chunker = SemanticChunker(
         embedding_model=openai_embeddings,
         chunk_size=512,
@@ -205,7 +252,7 @@ def ingest_book_to_supabase(file_path: str, title: str, author: str, year: int):
             db.commit()
 
         # 4. Process the Text
-        chapter_blocks = get_chapter_blocks(full_text)
+        chapter_blocks = get_chapter_blocks(body_text)
         print(
             f"Generated {len(chapter_blocks)} chapter-blocks. Beginning processing pipeline..."
         )
@@ -266,9 +313,12 @@ def ingest_book_to_supabase(file_path: str, title: str, author: str, year: int):
 if __name__ == "__main__":
     import json
 
-    with open("scripts/ingest_novel_inputs.json", "r") as f:
+    with open("scripts/ingest_novel_inputs.json", "r", encoding="utf-8") as f:
         inputs = json.load(f)
 
-    ingest_book_to_supabase(
-        inputs["file_path"], inputs["title"], inputs["author"], inputs["year"]
-    )
+    file_path = inputs["file_path"]
+    with open(file_path, "r", encoding="utf-8") as f:
+        full_text = f.read()
+
+    title, author, year, body = parse_header_from_markdown(full_text)
+    ingest_book_to_supabase(body, title, author, year)

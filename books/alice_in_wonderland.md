@@ -1,3 +1,10 @@
+# Title: Alice's Adventures in Wonderland
+
+## Author: Lewis Carroll
+
+## Year: 1865
+
+-------
 
 ## CHAPTER I. Down the Rabbit-Hole
 
