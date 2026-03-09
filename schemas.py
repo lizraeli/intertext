@@ -1,3 +1,5 @@
+import re
+
 from pydantic import BaseModel, Field
 from typing import List, Optional
 
@@ -44,7 +46,7 @@ class SegmentResponse(BaseModel):
 
 
 class TraversalRequest(BaseModel):
-    current_vector: list[float]
+    current_embedding: list[float]
     theme_filter: Optional[str] = None
     limit: int = 5
 
@@ -54,3 +56,76 @@ class TraversalResponse(BaseModel):
     author: str
     content: str
     similarity_score: float
+
+
+# --- Frontend API Schemas ---
+
+_ABBREVIATIONS = frozenset(
+    {
+        "mr.",
+        "mrs.",
+        "ms.",
+        "dr.",
+        "st.",
+        "prof.",
+        "rev.",
+        "sr.",
+        "jr.",
+        "etc.",
+        "vs.",
+        "vol.",
+        "no.",
+        "gen.",
+        "col.",
+        "lt.",
+        "sgt.",
+        "capt.",
+        "govt.",
+        "approx.",
+        "fig.",
+        "inc.",
+        "ltd.",
+        "dept.",
+    }
+)
+
+
+def extract_opening_line(content: str, max_chars: int = 200) -> str:
+    """Extract the first sentence from segment content, respecting abbreviations."""
+    text = content[: max_chars * 2].replace("\n", " ").strip()
+    for match in re.finditer(r"[.!?][\"'\u2019\u201d]*\s", text):
+        end = match.end()
+        before_punct = text[: match.start()].split()
+        if before_punct and before_punct[-1].lower() in _ABBREVIATIONS:
+            continue
+        line = text[:end].strip()
+        if len(line) >= 20:
+            return line
+    return text[:max_chars].strip()
+
+
+class SegmentPreview(BaseModel):
+    id: int
+    opening_line: str
+    mood: str
+
+
+class SimilarSegmentPreview(BaseModel):
+    id: int
+    opening_line: str
+    mood: str
+    novel_title: str
+    author: str
+    similarity_score: float
+
+
+class FullSegmentResponse(BaseModel):
+    id: int
+    novel_id: int
+    content: str
+    novel_title: str
+    author: str
+    year: Optional[int]
+    mood: str
+    themes: list[ThemeAnnotation]
+    setting: str

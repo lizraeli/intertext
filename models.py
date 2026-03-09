@@ -1,7 +1,9 @@
 from sqlalchemy import Column, Integer, String, Text, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Mapped, relationship
 from sqlalchemy.dialects.postgresql import JSONB
 from pgvector.sqlalchemy import Vector
+from typing import Any
+
 from database import Base
 
 
@@ -29,7 +31,7 @@ class NovelSegment(Base):
     end_index = Column(Integer, nullable=False)
     content = Column(Text, nullable=False)
     token_count = Column(Integer, nullable=False)
-    metadata_col = Column("metadata", JSONB, nullable=False)
-    embedding = Column(Vector(3072))
+    metadata_col: Mapped[dict[str, Any]] = Column("metadata", JSONB, nullable=False)
+    embedding: Mapped[list[float] | None] = Column(Vector(3072))
 
-    novel = relationship("Novel", back_populates="segments")
+    novel: Mapped[Novel] = relationship("Novel", back_populates="segments")

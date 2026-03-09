@@ -1,0 +1,164 @@
+import os
+from typing import Generator, TypedDict
+
+import pytest
+from dotenv import load_dotenv
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import Session, sessionmaker
+from fastapi.testclient import TestClient
+
+from database import Base, get_db
+from main import app
+from models import Novel, NovelSegment
+
+
+class SeedData(TypedDict):
+    novel_1: Novel
+    novel_2: Novel
+    seg_a: NovelSegment
+    seg_b: NovelSegment
+    seg_c: NovelSegment
+
+load_dotenv()
+
+DATABASE_TEST_URL = os.getenv("DATABASE_TEST_URL")
+if not DATABASE_TEST_URL:
+    raise ValueError("DATABASE_TEST_URL is not set in the .env file")
+
+test_engine = create_engine(DATABASE_TEST_URL, pool_pre_ping=True)
+TestSession = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
+
+
+def _make_embedding(index: int, dims: int = 3072) -> list[float]:
+    """Create a synthetic unit-direction embedding with a 1.0 at the given index."""
+    vec = [0.0] * dims
+    vec[index % dims] = 1.0
+    return vec
+
+
+SEED_METADATA_A = {
+    "primary_themes": [
+        {
+            "name": "isolation",
+            "intensity": 0.8,
+            "tone": -0.5,
+            "manifestation": "The character sits alone in an empty room.",
+        }
+    ],
+    "characters": ["Alice"],
+    "setting": "a dark room",
+    "mood": "melancholic",
+    "chapter": "Chapter 1",
+}
+
+SEED_METADATA_B = {
+    "primary_themes": [
+        {
+            "name": "hope",
+            "intensity": 0.9,
+            "tone": 0.7,
+            "manifestation": "Light breaks through the window at dawn.",
+        }
+    ],
+    "characters": ["Bob"],
+    "setting": "a hilltop",
+    "mood": "tender",
+    "chapter": "Chapter 2",
+}
+
+SEED_METADATA_C = {
+    "primary_themes": [
+        {
+            "name": "isolation",
+            "intensity": 0.6,
+            "tone": -0.3,
+            "manifestation": "The streets are empty and silent.",
+        }
+    ],
+    "characters": ["Clara"],
+    "setting": "an abandoned city",
+    "mood": "contemplative",
+    "chapter": "Chapter 1",
+}
+
+
+@pytest.fixture(scope="session", autouse=True)
+def setup_database() -> Generator[None, None, None]:
+    with test_engine.connect() as conn:
+        conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+        conn.commit()
+    Base.metadata.create_all(bind=test_engine)
+    yield
+    Base.metadata.drop_all(bind=test_engine)
+
+
+@pytest.fixture
+def db_session() -> Generator[Session, None, None]:
+    connection = test_engine.connect()
+    transaction = connection.begin()
+    session = TestSession(bind=connection)
+    yield session
+    session.close()
+    transaction.rollback()
+    connection.close()
+
+
+@pytest.fixture
+def client(db_session: Session) -> Generator[TestClient, None, None]:
+    def override_get_db() -> Generator[Session, None, None]:
+        yield db_session
+
+    app.dependency_overrides[get_db] = override_get_db
+    with TestClient(app) as c:
+        yield c
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def seed_data(db_session: Session) -> SeedData:
+    novel_1 = Novel(title="Test Novel", author="Test Author", publication_year=2000)
+    novel_2 = Novel(title="Other Novel", author="Other Author", publication_year=2010)
+    db_session.add_all([novel_1, novel_2])
+    db_session.flush()
+
+    seg_a = NovelSegment(
+        novel_id=novel_1.id,
+        macro_block_id=0,
+        start_index=0,
+        end_index=100,
+        content="The room was empty and the silence pressed in from every side. She sat alone by the window.",
+        token_count=20,
+        metadata_col=SEED_METADATA_A,
+        embedding=_make_embedding(0),
+    )
+    seg_b = NovelSegment(
+        novel_id=novel_1.id,
+        macro_block_id=1,
+        start_index=101,
+        end_index=200,
+        content="Light broke through the clouds at dawn. It was the first warmth she had felt in weeks.",
+        token_count=18,
+        metadata_col=SEED_METADATA_B,
+        embedding=_make_embedding(1),
+    )
+    seg_c = NovelSegment(
+        novel_id=novel_2.id,
+        macro_block_id=0,
+        start_index=0,
+        end_index=150,
+        content="The streets were empty and silent. No one had walked here in years.",
+        token_count=15,
+        metadata_col=SEED_METADATA_C,
+        embedding=_make_embedding(0),
+    )
+
+    db_session.add_all([seg_a, seg_b, seg_c])
+    db_session.flush()
+
+    return {
+        "novel_1": novel_1,
+        "novel_2": novel_2,
+        "seg_a": seg_a,
+        "seg_b": seg_b,
+        "seg_c": seg_c,
+    }

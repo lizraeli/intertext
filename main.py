@@ -1,21 +1,42 @@
-from fastapi import FastAPI, Depends, HTTPException
+import os
+
+from fastapi import FastAPI, Depends, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from database import get_db
-from models import Novel, NovelSegment
-from schemas import SegmentResponse, TraversalRequest, TraversalResponse
+from schemas import (
+    SegmentResponse,
+    TraversalRequest,
+    TraversalResponse,
+    SegmentPreview,
+    SimilarSegmentPreview,
+    FullSegmentResponse,
+    extract_opening_line,
+)
+from queries import (
+    query_novel_segments,
+    query_similar_by_vector,
+    query_random_segments,
+    query_segment_by_id,
+    query_segment_embedding,
+    query_similar_by_segment,
+)
 from typing import List
 
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[os.getenv("FRONTEND_URL", "http://localhost:5173")],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 @app.get("/api/novels/{novel_id}/segments", response_model=List[SegmentResponse])
 def get_novel_segments(novel_id: int, db: Session = Depends(get_db)):
-    segments = (
-        db.query(NovelSegment)
-        .filter(NovelSegment.novel_id == novel_id)
-        .order_by(NovelSegment.macro_block_id, NovelSegment.id)
-        .all()
-    )
+    segments = query_novel_segments(db, novel_id)
     if not segments:
         raise HTTPException(status_code=404, detail="Novel not found")
 
@@ -32,30 +53,9 @@ def get_novel_segments(novel_id: int, db: Session = Depends(get_db)):
 @app.post("/api/segments/similar", response_model=List[TraversalResponse])
 def find_similar_segments(request: TraversalRequest, db: Session = Depends(get_db)):
     try:
-        query = db.query(
-            Novel.title,
-            Novel.author,
-            NovelSegment.content,
-            NovelSegment.embedding.cosine_distance(request.current_vector).label(
-                "distance"
-            ),
-        ).join(Novel, NovelSegment.novel_id == Novel.id)
-
-        if request.theme_filter:
-            query = query.filter(
-                NovelSegment.metadata_col["primary_themes"].contains(
-                    [request.theme_filter]
-                )
-            )
-
-        results = (
-            query.order_by(
-                NovelSegment.embedding.cosine_distance(request.current_vector)
-            )
-            .limit(request.limit)
-            .all()
+        results = query_similar_by_vector(
+            db, request.current_embedding, request.theme_filter, request.limit
         )
-
         return [
             TraversalResponse(
                 novel_title=r.title,
@@ -67,3 +67,64 @@ def find_similar_segments(request: TraversalRequest, db: Session = Depends(get_d
         ]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/segments/random", response_model=List[SegmentPreview])
+def get_random_segments(
+    count: int = Query(default=5, ge=1, le=20), db: Session = Depends(get_db)
+):
+    rows = query_random_segments(db, count)
+    return [
+        SegmentPreview(
+            id=row.id,
+            opening_line=extract_opening_line(row.content),
+            mood=row.metadata_col.get("mood", "unknown"),
+        )
+        for row in rows
+    ]
+
+
+@app.get("/api/segments/{segment_id}", response_model=FullSegmentResponse)
+def get_segment(segment_id: int, db: Session = Depends(get_db)):
+    row = query_segment_by_id(db, segment_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Segment not found")
+
+    metadata = row.metadata_col
+    return FullSegmentResponse(
+        id=row.id,
+        novel_id=row.novel_id,
+        content=row.content,
+        novel_title=row.title,
+        author=row.author,
+        year=row.publication_year,
+        mood=metadata.get("mood", "unknown"),
+        themes=metadata.get("primary_themes", []),
+        setting=metadata.get("setting", "Unknown"),
+    )
+
+
+@app.get(
+    "/api/segments/{segment_id}/similar", response_model=List[SimilarSegmentPreview]
+)
+def get_similar_segments(
+    segment_id: int,
+    limit: int = Query(default=3, ge=1, le=10),
+    db: Session = Depends(get_db),
+):
+    source = query_segment_embedding(db, segment_id)
+    if not source:
+        raise HTTPException(status_code=404, detail="Segment not found")
+
+    rows = query_similar_by_segment(db, segment_id, source.embedding, limit)
+    return [
+        SimilarSegmentPreview(
+            id=row.id,
+            opening_line=extract_opening_line(row.content),
+            mood=row.metadata_col.get("mood", "unknown"),
+            novel_title=row.title,
+            author=row.author,
+            similarity_score=1.0 - row.distance,
+        )
+        for row in rows
+    ]
