@@ -74,14 +74,7 @@ def get_random_segments(
     count: int = Query(default=5, ge=1, le=20), db: Session = Depends(get_db)
 ):
     rows = query_random_segments(db, count)
-    return [
-        SegmentPreview(
-            id=row.id,
-            opening_line=extract_opening_line(row.content),
-            mood=row.metadata_col.get("mood", "unknown"),
-        )
-        for row in rows
-    ]
+    return [SegmentPreview.from_row(row) for row in rows]
 
 
 @app.get("/api/segments/{segment_id}", response_model=FullSegmentResponse)
@@ -90,18 +83,7 @@ def get_segment(segment_id: int, db: Session = Depends(get_db)):
     if not row:
         raise HTTPException(status_code=404, detail="Segment not found")
 
-    metadata = row.metadata_col
-    return FullSegmentResponse(
-        id=row.id,
-        novel_id=row.novel_id,
-        content=row.content,
-        novel_title=row.title,
-        author=row.author,
-        year=row.publication_year,
-        mood=metadata.get("mood", "unknown"),
-        themes=metadata.get("primary_themes", []),
-        setting=metadata.get("setting", "Unknown"),
-    )
+    return FullSegmentResponse.from_row(row)
 
 
 @app.get(
@@ -116,15 +98,6 @@ def get_similar_segments(
     if not source:
         raise HTTPException(status_code=404, detail="Segment not found")
 
-    rows = query_similar_by_segment(db, segment_id, source.embedding, limit)
-    return [
-        SimilarSegmentPreview(
-            id=row.id,
-            opening_line=extract_opening_line(row.content),
-            mood=row.metadata_col.get("mood", "unknown"),
-            novel_title=row.title,
-            author=row.author,
-            similarity_score=1.0 - row.distance,
-        )
-        for row in rows
-    ]
+    similar_rows = query_similar_by_segment(db, segment_id, source.embedding, limit)
+
+    return [SimilarSegmentPreview.from_row(row) for row in similar_rows]

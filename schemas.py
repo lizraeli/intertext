@@ -1,7 +1,9 @@
 import re
 
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import Optional
+
+from queries import RandomSegmentsRow, SegmentByIdRow, SimilarRow
 
 
 # --- Ingestion Schemas (For OpenAI) ---
@@ -105,12 +107,31 @@ def extract_opening_line(content: str, max_chars: int = 200) -> str:
 
 
 class SegmentPreview(BaseModel):
+    @staticmethod
+    def from_row(row: RandomSegmentsRow) -> "SegmentPreview":
+        return SegmentPreview(
+            id=row.id,
+            opening_line=extract_opening_line(row.content),
+            mood=row.metadata_col.get("mood", "unknown"),
+        )
+
     id: int
     opening_line: str
     mood: str
 
 
 class SimilarSegmentPreview(BaseModel):
+    @staticmethod
+    def from_row(row: SimilarRow) -> "SimilarSegmentPreview":
+        return SimilarSegmentPreview(
+            id=row.id,
+            opening_line=extract_opening_line(row.content),
+            mood=row.metadata_col.get("mood", "unknown"),
+            novel_title=row.title,
+            author=row.author,
+            similarity_score=1.0 - row.distance,
+        )
+
     id: int
     opening_line: str
     mood: str
@@ -120,6 +141,21 @@ class SimilarSegmentPreview(BaseModel):
 
 
 class FullSegmentResponse(BaseModel):
+    @staticmethod
+    def from_row(row: SegmentByIdRow) -> "FullSegmentResponse":
+        metadata = row.metadata_col
+        return FullSegmentResponse(
+            id=row.id,
+            novel_id=row.novel_id,
+            content=row.content,
+            novel_title=row.title,
+            author=row.author,
+            year=row.publication_year,
+            mood=metadata.get("mood", "unknown"),
+            themes=metadata.get("primary_themes", []),
+            setting=metadata.get("setting", "Unknown"),
+        )
+
     id: int
     novel_id: int
     content: str

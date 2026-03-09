@@ -1,7 +1,8 @@
-from typing import Optional
+from typing import Any, Optional, Protocol, Sequence
 
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import func
+from sqlalchemy import desc
 
 from models import Novel, NovelSegment
 
@@ -37,7 +38,13 @@ def query_similar_by_vector(
     )
 
 
-def query_random_segments(db: Session, count: int):
+class RandomSegmentsRow(Protocol):
+    id: int
+    content: str
+    metadata_col: dict[str, Any]
+
+
+def query_random_segments(db: Session, count: int) -> Sequence[RandomSegmentsRow]:
     return (
         db.query(NovelSegment.id, NovelSegment.content, NovelSegment.metadata_col)
         .order_by(func.random())
@@ -46,7 +53,17 @@ def query_random_segments(db: Session, count: int):
     )
 
 
-def query_segment_by_id(db: Session, segment_id: int):
+class SegmentByIdRow(Protocol):
+    id: int
+    novel_id: int
+    content: str
+    metadata_col: dict[str, Any]
+    title: str
+    author: str
+    publication_year: int | None
+
+
+def query_segment_by_id(db: Session, segment_id: int) -> SegmentByIdRow | None:
     return (
         db.query(
             NovelSegment.id,
@@ -69,9 +86,18 @@ def query_segment_embedding(db: Session, segment_id: int):
     )
 
 
+class SimilarRow(Protocol):
+    id: int
+    content: str
+    metadata_col: dict[str, Any]
+    title: str
+    author: str
+    distance: float
+
+
 def query_similar_by_segment(
     db: Session, segment_id: int, embedding: list[float], limit: int
-):
+) -> Sequence[SimilarRow]:
     return (
         db.query(
             NovelSegment.id,
@@ -84,6 +110,26 @@ def query_similar_by_segment(
         .join(Novel, NovelSegment.novel_id == Novel.id)
         .filter(NovelSegment.id != segment_id)
         .order_by(NovelSegment.embedding.cosine_distance(embedding))
+        .limit(limit)
+        .all()
+    )
+
+
+def query_different_by_segment(
+    db: Session, segment_id: int, embedding: list[float], limit: int
+) -> Sequence[SimilarRow]:
+    return (
+        db.query(
+            NovelSegment.id,
+            NovelSegment.content,
+            NovelSegment.metadata_col,
+            Novel.title,
+            Novel.author,
+            NovelSegment.embedding.cosine_distance(embedding).label("distance"),
+        )
+        .join(Novel, NovelSegment.novel_id == Novel.id)
+        .filter(NovelSegment.novel_id != segment_id)
+        .order_by(desc(NovelSegment.embedding.cosine_distance(embedding)))
         .limit(limit)
         .all()
     )
