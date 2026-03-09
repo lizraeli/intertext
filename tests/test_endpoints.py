@@ -3,19 +3,21 @@ from tests.conftest import SeedData
 
 
 class TestRandomSegments:
-    def test_returns_requested_count(self, client: TestClient) -> None:
+    def test_returns_requested_count(
+        self, client: TestClient, seed_data: SeedData
+    ) -> None:
         response = client.get("/api/segments/random?count=2")
         assert response.status_code == 200
         data = response.json()
         assert len(data) == 2
 
-    def test_default_count(self, client: TestClient) -> None:
+    def test_default_count(self, client: TestClient, seed_data: SeedData) -> None:
         response = client.get("/api/segments/random")
         assert response.status_code == 200
         data = response.json()
         assert len(data) == 3  # only 3 segments in seed data, default is 5
 
-    def test_response_shape(self, client: TestClient) -> None:
+    def test_response_shape(self, client: TestClient, seed_data: SeedData) -> None:
         response = client.get("/api/segments/random?count=1")
         data = response.json()
         segment = data[0]
@@ -52,7 +54,7 @@ class TestGetSegment:
             ],
         }
 
-    def test_not_found(self, client: TestClient) -> None:
+    def test_not_found(self, client: TestClient, seed_data: SeedData) -> None:
         response = client.get("/api/segments/999999")
         assert response.status_code == 404
 
@@ -117,6 +119,6 @@ class TestSimilarSegments:
         data = response.json()
         assert len(data) == 1
 
-    def test_not_found(self, client: TestClient) -> None:
+    def test_not_found(self, client: TestClient, seed_data: SeedData) -> None:
         response = client.get("/api/segments/999999/similar")
         assert response.status_code == 404
