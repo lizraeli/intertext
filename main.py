@@ -11,14 +11,12 @@ from schemas import (
     SegmentPreview,
     SimilarSegmentPreview,
     FullSegmentResponse,
-    extract_opening_line,
 )
 from queries import (
     query_novel_segments,
     query_similar_by_vector,
     query_random_segments,
     query_segment_by_id,
-    query_segment_embedding,
     query_similar_by_segment,
 )
 from typing import List
@@ -94,10 +92,10 @@ def get_similar_segments(
     limit: int = Query(default=3, ge=1, le=10),
     db: Session = Depends(get_db),
 ):
-    source = query_segment_embedding(db, segment_id)
+    source = query_segment_by_id(db, segment_id)
     if not source:
         raise HTTPException(status_code=404, detail="Segment not found")
 
-    similar_rows = query_similar_by_segment(db, segment_id, source.embedding, limit)
+    similar_rows = query_similar_by_segment(db, segment_id, source, limit)
 
     return [SimilarSegmentPreview.from_row(row) for row in similar_rows]

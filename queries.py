@@ -58,6 +58,7 @@ class SegmentByIdRow(Protocol):
     novel_id: int
     content: str
     metadata_col: dict[str, Any]
+    embedding: list[float]
     title: str
     author: str
     publication_year: int | None
@@ -70,6 +71,7 @@ def query_segment_by_id(db: Session, segment_id: int) -> SegmentByIdRow | None:
             NovelSegment.novel_id,
             NovelSegment.content,
             NovelSegment.metadata_col,
+            NovelSegment.embedding,
             Novel.title,
             Novel.author,
             Novel.publication_year,
@@ -96,8 +98,14 @@ class SimilarRow(Protocol):
 
 
 def query_similar_by_segment(
-    db: Session, segment_id: int, embedding: list[float], limit: int
+    db: Session, segment_id: int, source: SegmentByIdRow, limit: int
 ) -> Sequence[SimilarRow]:
+    """
+    Query similar segments by segment id and source segment.
+    Excludes the novel of the source segment.
+    """
+    embedding = source.embedding
+
     return (
         db.query(
             NovelSegment.id,
@@ -108,7 +116,7 @@ def query_similar_by_segment(
             NovelSegment.embedding.cosine_distance(embedding).label("distance"),
         )
         .join(Novel, NovelSegment.novel_id == Novel.id)
-        .filter(NovelSegment.id != segment_id)
+        .filter(NovelSegment.id != segment_id, NovelSegment.novel_id != source.novel_id)
         .order_by(NovelSegment.embedding.cosine_distance(embedding))
         .limit(limit)
         .all()
