@@ -142,7 +142,11 @@ class SimilarSegmentPreview(BaseModel):
 
 class FullSegmentResponse(BaseModel):
     @staticmethod
-    def from_row(row: SegmentByIdRow) -> "FullSegmentResponse":
+    def from_row(
+        row: SegmentByIdRow,
+        prev_segment_id: Optional[int] = None,
+        next_segment_id: Optional[int] = None,
+    ) -> "FullSegmentResponse":
         metadata = row.metadata_col
         return FullSegmentResponse(
             id=row.id,
@@ -154,6 +158,8 @@ class FullSegmentResponse(BaseModel):
             mood=metadata.get("mood", "unknown"),
             themes=metadata.get("primary_themes", []),
             setting=metadata.get("setting", "Unknown"),
+            prev_segment_id=prev_segment_id,
+            next_segment_id=next_segment_id,
         )
 
     id: int
@@ -165,3 +171,5 @@ class FullSegmentResponse(BaseModel):
     mood: str
     themes: list[ThemeAnnotation]
     setting: str
+    prev_segment_id: Optional[int] = None
+    next_segment_id: Optional[int] = None

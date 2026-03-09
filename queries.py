@@ -56,6 +56,7 @@ def query_random_segments(db: Session, count: int) -> Sequence[RandomSegmentsRow
 class SegmentByIdRow(Protocol):
     id: int
     novel_id: int
+    macro_block_id: int
     content: str
     metadata_col: dict[str, Any]
     embedding: list[float]
@@ -69,6 +70,7 @@ def query_segment_by_id(db: Session, segment_id: int) -> SegmentByIdRow | None:
         db.query(
             NovelSegment.id,
             NovelSegment.novel_id,
+            NovelSegment.macro_block_id,
             NovelSegment.content,
             NovelSegment.metadata_col,
             NovelSegment.embedding,
@@ -80,6 +82,48 @@ def query_segment_by_id(db: Session, segment_id: int) -> SegmentByIdRow | None:
         .filter(NovelSegment.id == segment_id)
         .first()
     )
+
+
+def query_prev_segment_id(
+    db: Session, novel_id: int, macro_block_id: int, segment_id: int
+) -> Optional[int]:
+    """Previous segment in the same novel by (macro_block_id, id) order."""
+    row = (
+        db.query(NovelSegment.id)
+        .filter(
+            NovelSegment.novel_id == novel_id,
+            (NovelSegment.macro_block_id < macro_block_id)
+            | (
+                (NovelSegment.macro_block_id == macro_block_id)
+                & (NovelSegment.id < segment_id)
+            ),
+        )
+        .order_by(desc(NovelSegment.macro_block_id), desc(NovelSegment.id))
+        .limit(1)
+        .first()
+    )
+    return row.id if row else None
+
+
+def query_next_segment_id(
+    db: Session, novel_id: int, macro_block_id: int, segment_id: int
+) -> Optional[int]:
+    """Next segment in the same novel by (macro_block_id, id) order."""
+    row = (
+        db.query(NovelSegment.id)
+        .filter(
+            NovelSegment.novel_id == novel_id,
+            (NovelSegment.macro_block_id > macro_block_id)
+            | (
+                (NovelSegment.macro_block_id == macro_block_id)
+                & (NovelSegment.id > segment_id)
+            ),
+        )
+        .order_by(NovelSegment.macro_block_id, NovelSegment.id)
+        .limit(1)
+        .first()
+    )
+    return row.id if row else None
 
 
 def query_segment_embedding(db: Session, segment_id: int):

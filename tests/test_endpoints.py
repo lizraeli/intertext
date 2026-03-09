@@ -33,6 +33,7 @@ class TestGetSegment:
         self, client: TestClient, seed_data: SeedData
     ) -> None:
         seg_id = seed_data["seg_a"].id
+        seg_b_id = seed_data["seg_b"].id
         response = client.get(f"/api/segments/{seg_id}")
         assert response.status_code == 200
         assert response.json() == {
@@ -52,7 +53,31 @@ class TestGetSegment:
                     "manifestation": "The character sits alone in an empty room.",
                 }
             ],
+            "prev_segment_id": None,
+            "next_segment_id": seg_b_id,
         }
+
+    def test_prev_next_segment_ids(
+        self, client: TestClient, seed_data: SeedData
+    ) -> None:
+        # seg_a is first in novel_1: no prev, next is seg_b
+        seg_a_id = seed_data["seg_a"].id
+        seg_b_id = seed_data["seg_b"].id
+        seg_c_id = seed_data["seg_c"].id
+
+        response_a = client.get(f"/api/segments/{seg_a_id}").json()
+        assert response_a["prev_segment_id"] is None
+        assert response_a["next_segment_id"] == seg_b_id
+
+        # seg_b is second in novel_1: prev is seg_a, no next
+        response_b = client.get(f"/api/segments/{seg_b_id}").json()
+        assert response_b["prev_segment_id"] == seg_a_id
+        assert response_b["next_segment_id"] is None
+
+        # seg_c is only segment in novel_2: no prev, no next
+        r_c = client.get(f"/api/segments/{seg_c_id}").json()
+        assert r_c["prev_segment_id"] is None
+        assert r_c["next_segment_id"] is None
 
     def test_not_found(self, client: TestClient, seed_data: SeedData) -> None:
         response = client.get("/api/segments/999999")
@@ -75,7 +100,7 @@ class TestSimilarSegments:
         seg_id = seed_data["seg_a"].id
         response = client.get(f"/api/segments/{seg_id}/similar?limit=10")
         data = response.json()
-        returned_ids = [s["id"] for s in data]
+        returned_ids = [segment["id"] for segment in data]
         assert seg_id not in returned_ids
 
     def test_response_shape(self, client: TestClient, seed_data: SeedData) -> None:
