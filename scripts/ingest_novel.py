@@ -2,6 +2,7 @@ import re
 import time
 from typing import List
 from dotenv import load_dotenv
+import tiktoken
 
 from openai import OpenAI
 from chonkie import SemanticChunker
@@ -21,6 +22,27 @@ load_dotenv()
 client = OpenAI()
 
 openai_embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
+
+# text-embedding-3-large uses cl100k_base; max 8191 tokens
+EMBEDDING_MAX_TOKENS = 8191
+
+
+def get_token_count(text: str) -> int:
+    enc = tiktoken.get_encoding("cl100k_base")
+    return len(enc.encode(text))
+
+
+def split_chapter_into_chunks(
+    text: str, max_tokens: int = EMBEDDING_MAX_TOKENS
+) -> list[str]:
+    enc = tiktoken.get_encoding("cl100k_base")
+    tokens = enc.encode(text)
+    if len(tokens) <= max_tokens:
+        return [text]
+
+    chunks = create_macro_chunks(text)
+    print(f"Split {len(tokens)} tokens into {len(chunks)} chunks.")
+    return chunks
 
 
 def clean_text(text: str) -> str:
@@ -121,7 +143,7 @@ def _is_sentence_end(token: str) -> bool:
 
 
 def create_macro_chunks(
-    text: str, max_words: int = 5000, overlap_words: int = 250
+    text: str, max_words: int = 3500, overlap_words: int = 250
 ) -> List[str]:
     """Slices a massive text into overlapping macro blocks, splitting at sentence boundaries."""
     tokens = re.findall(r"\S+\s*", text)
@@ -270,31 +292,33 @@ def ingest_book_to_supabase(body_text: str, title: str, author: str, year: int):
             print(
                 f"  -> Processing Chapter {chapter_data["chapter"]}/{len(chapter_blocks)}..."
             )
+            chapter_chunks = split_chapter_into_chunks(chapter_data["text"])
 
-            segments = chunker(chapter_data["text"])
+            for chapter_chunk in chapter_chunks:
+                segments = chunker(chapter_chunk)
 
-            print(f"     Generated {len(segments)} semantic segments.")
+                print(f"     Generated {len(segments)} semantic segments.")
 
-            for segment in segments:
-                metadata_json = extract_metadata(segment.text)
-                metadata_json["chapter"] = chapter_data["chapter"]
-                embedding_vector = openai_embeddings.embed(segment.text)
+                for segment in segments:
+                    metadata_json = extract_metadata(segment.text)
+                    metadata_json["chapter"] = chapter_data["chapter"]
+                    embedding_vector = openai_embeddings.embed(segment.text)
 
-                db_seg = NovelSegment(
-                    novel_id=novel_record.id,
-                    macro_block_id=block_index,
-                    start_index=segment.start_index,
-                    end_index=segment.end_index,
-                    content=segment.text.strip(),
-                    token_count=segment.token_count,
-                    metadata_col=metadata_json,
-                    embedding=embedding_vector,
-                )
-                total_segments_processed += 1
+                    db_seg = NovelSegment(
+                        novel_id=novel_record.id,
+                        macro_block_id=block_index,
+                        start_index=segment.start_index,
+                        end_index=segment.end_index,
+                        content=segment.text.strip(),
+                        token_count=segment.token_count,
+                        metadata_col=metadata_json,
+                        embedding=embedding_vector,
+                    )
+                    total_segments_processed += 1
 
-                db.add(db_seg)
-                db.commit()
-                print(f"     Committed segment {db_seg.id} to database.")
+                    db.add(db_seg)
+                    db.commit()
+                    print(f"     Committed segment {db_seg.id} to database.")
 
         elapsed = time.time() - start_time
         print(f"\nSuccess! '{title}' ingested.")
