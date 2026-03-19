@@ -21,6 +21,37 @@ def query_novel_by_id(db: Session, novel_id: int) -> Novel | None:
     return db.query(Novel).filter(Novel.id == novel_id).first()
 
 
+def get_novel_by_title(db: Session, title: str) -> Novel | None:
+    return db.query(Novel).filter(Novel.title == title).first()
+
+
+def get_max_chapter_block_index(db: Session, novel_id: int) -> int | None:
+    return (
+        db.query(func.max(NovelChapter.block_index))
+        .filter(NovelChapter.novel_id == novel_id)
+        .scalar()
+    )
+
+
+def get_chapter_by_novel_and_block(
+    db: Session, novel_id: int, block_index: int
+) -> NovelChapter | None:
+    return (
+        db.query(NovelChapter)
+        .filter(
+            NovelChapter.novel_id == novel_id,
+            NovelChapter.block_index == block_index,
+        )
+        .first()
+    )
+
+
+def delete_segments_for_chapter(db: Session, chapter_id: int) -> None:
+    db.query(NovelSegment).filter(NovelSegment.chapter_id == chapter_id).delete(
+        synchronize_session=False
+    )
+
+
 def query_chapters_for_novel(db: Session, novel_id: int) -> list[NovelChapter]:
     return (
         db.query(NovelChapter)

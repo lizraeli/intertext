@@ -1,16 +1,19 @@
 import time
 from dotenv import load_dotenv
 from chonkie.embeddings import OpenAIEmbeddings
-from sqlalchemy import func
 
 from database import SessionLocal
-from models import Novel, NovelChapter, NovelSegment
+from models import Novel, NovelSegment
 from queries import (
+    delete_segments_for_chapter,
+    get_chapter_by_novel_and_block,
+    get_novel_by_title,
     get_novel_character_names,
     get_or_create_characters,
     get_or_create_chapter,
     get_or_create_mood,
     get_or_create_place,
+    get_max_chapter_block_index,
     sync_segment_themes,
 )
 from scripts.chunkers import recursive_chunker
@@ -30,32 +33,23 @@ def ingest_book_to_db(book: BookData):
     db = SessionLocal()
     try:
         # Find or create the novel record to support resuming
-        novel_record = db.query(Novel).filter(Novel.title == book.title).first()
+        novel_record = get_novel_by_title(db=db, title=book.title)
         resume_from_block = 0
 
         if novel_record:
-            max_block = (
-                db.query(func.max(NovelChapter.block_index))
-                .filter(NovelChapter.novel_id == novel_record.id)
-                .scalar()
+            max_block_index = get_max_chapter_block_index(
+                db=db, novel_id=novel_record.id
             )
 
-            if max_block is not None:
-                last_chapter = (
-                    db.query(NovelChapter)
-                    .filter(
-                        NovelChapter.novel_id == novel_record.id,
-                        NovelChapter.block_index == max_block,
-                    )
-                    .first()
+            if max_block_index is not None:
+                last_chapter = get_chapter_by_novel_and_block(
+                    db=db, novel_id=novel_record.id, block_index=max_block_index
                 )
                 if last_chapter is not None:
                     # Delete segments from the last chapter (may be incomplete)
-                    db.query(NovelSegment).filter(
-                        NovelSegment.chapter_id == last_chapter.id
-                    ).delete(synchronize_session=False)
+                    delete_segments_for_chapter(db=db, chapter_id=last_chapter.id)
                 db.commit()
-                resume_from_block = max_block
+                resume_from_block = max_block_index
                 print(f"Resuming from block {resume_from_block} (0-indexed)...")
             else:
                 print(
@@ -86,7 +80,7 @@ def ingest_book_to_db(book: BookData):
                 continue
 
             print(
-                f"  -> Processing Chapter {chapter_data.chapter}/{len(chapter_blocks)}..."
+                f"  -> Processing Chapter {chapter_data.chapter} ({block_index + 1}/{len(chapter_blocks)}):"
             )
 
             chapter_row = get_or_create_chapter(
