@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql.expression import func
 from sqlalchemy import desc
 
-from models import Novel, NovelSegment
+from models import Novel, NovelCharacter, NovelSegment
 
 
 def query_novel_segments(db: Session, novel_id: int):
@@ -185,3 +185,38 @@ def query_different_by_segment(
         .limit(limit)
         .all()
     )
+
+
+def get_or_create_characters(
+    db: Session, novel_id: int, character_names: list[str]
+) -> list[NovelCharacter]:
+    """Resolve character names to NovelCharacter objects, creating rows as needed."""
+    result: list[NovelCharacter] = []
+    for name in character_names:
+        name = name.strip()
+        if not name:
+            continue
+
+        char = (
+            db.query(NovelCharacter)
+            .filter(
+                NovelCharacter.novel_id == novel_id,
+                NovelCharacter.name == name,
+            )
+            .first()
+        )
+        if char is None:
+            char = NovelCharacter(novel_id=novel_id, name=name)
+            db.add(char)
+            db.flush()
+
+        result.append(char)
+
+    return result
+
+
+def get_novel_character_names(db: Session, novel_id: int) -> list[str]:
+    novel_characters = (
+        db.query(NovelCharacter).filter(NovelCharacter.novel_id == novel_id).all()
+    )
+    return [character.name for character in novel_characters]

@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 
 from database import SessionLocal
 from models import Novel, NovelCharacter, NovelSegment
+from queries import get_novel_character_names, get_or_create_characters
 from schemas import ChunkMetadata
 from scripts.chunkers import recursive_chunker
 from scripts.utils import BookData, get_chapter_blocks, parse_book_from_markdown
@@ -29,49 +30,39 @@ openai_embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
 EMBEDDING_MAX_TOKENS = 8191
 
 
-def extract_chunk_metadata(chunk_text: str) -> ChunkMetadata:
-    """Passes text to OpenAI gpt-4o-mini to extract structured JSON metadata."""
+def extract_chunk_metadata(
+    chunk_text: str,
+    book: BookData,
+    known_character_names: list[str] | None = None,
+) -> ChunkMetadata:
+    """Extracts metadata from a chunk of text."""
+    character_instructions = (
+        f'Known characters already identified in this novel (use these exact names when the passage refers to them): {", ".join(known_character_names)}\n\n'
+        if known_character_names
+        else ""
+    )
+    character_instructions += """For character names: Use the fullest canonical form you know for each character (e.g., "Jane Eyre" not "Jane" or "the narrator"; "Georgiana Reed" not "Georgiana"). Do not treat nicknames, titles, or narrator references as separate characters—consolidate them into the single canonical name for that person."""
+    if known_character_names:
+        character_instructions += " For any new character not in the known list, use the fullest canonical form. Do not create duplicates—if a character is in the known list, use that exact name even when the text uses a nickname."
+
+    system_content = f"""You are an expert literary analyst. Extract the requested metadata from this book excerpt.
+
+This excerpt is from "{book.title}" by {book.author}.
+
+{character_instructions}"""
     completion = client.beta.chat.completions.parse(
         model="gpt-4o-mini",
         messages=[
+            {"role": "system", "content": system_content},
             {
-                "role": "system",
-                "content": "You are an expert literary analyst. Extract the requested metadata from this book excerpt.",
+                "role": "user",
+                "content": f'Excerpt from "{book.title}" by {book.author}:\n\n{chunk_text}',
             },
-            {"role": "user", "content": chunk_text},
         ],
         response_format=ChunkMetadata,
         temperature=0.4,
     )
     return completion.choices[0].message.parsed
-
-
-def get_or_create_character_ids(
-    db: Session, novel_id: int, character_names: list[str]
-) -> list[int]:
-    """Resolve character names to IDs, creating NovelCharacter rows as needed."""
-    ids = []
-    for name in character_names:
-        name = name.strip()
-        if not name:
-            continue
-
-        char = (
-            db.query(NovelCharacter)
-            .filter(
-                NovelCharacter.novel_id == novel_id,
-                NovelCharacter.name == name,
-            )
-            .first()
-        )
-        if char is None:
-            char = NovelCharacter(novel_id=novel_id, name=name)
-            db.add(char)
-            db.flush()
-
-        ids.append(char.id)
-
-    return ids
 
 
 def ingest_book_to_db(book: BookData):
@@ -131,38 +122,46 @@ def ingest_book_to_db(book: BookData):
                 f"  -> Processing Chapter {chapter_data.chapter}/{len(chapter_blocks)}..."
             )
 
-            segments = recursive_chunker.chunk(chapter_data.text)
+            chunks = recursive_chunker.chunk(chapter_data.text)
 
-            print(f"     Generated {len(segments)} segments.")
+            print(f"     Generated {len(chunks)} segments.")
 
-            for segment in segments:
-                chunk_metadata = extract_chunk_metadata(segment.text)
+            for chunk in chunks:
+                known_character_names = get_novel_character_names(
+                    db=db, novel_id=novel_record.id
+                )
+                chunk_metadata = extract_chunk_metadata(
+                    chunk_text=chunk.text,
+                    book=book,
+                    known_character_names=known_character_names,
+                )
 
-                character_ids = get_or_create_character_ids(
+                characters = get_or_create_characters(
                     db=db,
                     novel_id=novel_record.id,
                     character_names=chunk_metadata.characters,
                 )
                 metadata_json = chunk_metadata.model_dump()
                 metadata_json["chapter"] = chapter_data.chapter
-                embedding_vector = openai_embeddings.embed(segment.text)
+                embedding_vector = openai_embeddings.embed(chunk.text)
 
-                db_seg = NovelSegment(
+                segment = NovelSegment(
                     novel_id=novel_record.id,
                     macro_block_id=block_index,
-                    start_index=segment.start_index,
-                    end_index=segment.end_index,
-                    content=segment.text.strip(),
-                    token_count=segment.token_count,
+                    start_index=chunk.start_index,
+                    end_index=chunk.end_index,
+                    content=chunk.text.strip(),
+                    token_count=chunk.token_count,
                     metadata_col=metadata_json,
-                    character_ids=character_ids,
                     embedding=embedding_vector,
                 )
+                db.add(segment)
+                db.flush()
+                segment.characters = characters
                 total_segments_processed += 1
 
-                db.add(db_seg)
                 db.commit()
-                print(f"     Committed segment {db_seg.id} to database.")
+                print(f"     Committed segment {segment.id} to database.")
 
         elapsed = time.time() - start_time
         print(f"\nSuccess! '{book.title}' ingested.")

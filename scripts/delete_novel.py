@@ -8,18 +8,15 @@ def delete_novel(title: str):
     db = SessionLocal()
 
     try:
-        # Search for the book
         novel = db.query(Novel).filter(Novel.title == title).first()
 
         if not novel:
             print(f"Could not find a novel titled '{title}' in the database.")
             return
 
-        # Confirm the deletion
         print(f"Found '{novel.title}' (ID: {novel.id}).")
-        print("Deleting novel and all associated segments and vectors...")
+        print("Deleting novel and all associated entities...")
 
-        # Delete and commit
         db.delete(novel)
         db.commit()
 
@@ -33,7 +30,6 @@ def delete_novel(title: str):
 
 
 if __name__ == "__main__":
-    # Set up a simple command-line interface
     parser = argparse.ArgumentParser(
         description="Delete a novel and all its segments from the database."
     )

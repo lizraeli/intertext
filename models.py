@@ -1,6 +1,14 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, UniqueConstraint
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Text,
+    ForeignKey,
+    Table,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, relationship
-from sqlalchemy.dialects.postgresql import ARRAY, JSONB
+from sqlalchemy.dialects.postgresql import JSONB
 from pgvector.sqlalchemy import Vector
 from typing import Any
 
@@ -23,6 +31,24 @@ class Novel(Base):
     )
 
 
+segment_characters = Table(
+    "segment_characters",
+    Base.metadata,
+    Column(
+        "segment_id",
+        Integer,
+        ForeignKey("novel_segments.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+    Column(
+        "character_id",
+        Integer,
+        ForeignKey("novel_characters.id", ondelete="CASCADE"),
+        primary_key=True,
+    ),
+)
+
+
 class NovelCharacter(Base):
     __tablename__ = "novel_characters"
 
@@ -31,6 +57,11 @@ class NovelCharacter(Base):
     name = Column(String(255), nullable=False)
 
     novel: Mapped[Novel] = relationship("Novel", back_populates="characters")
+    segments: Mapped[list["NovelSegment"]] = relationship(
+        "NovelSegment",
+        secondary=segment_characters,
+        back_populates="characters",
+    )
 
     __table_args__ = (
         UniqueConstraint("novel_id", "name", name="uq_novel_character_name"),
@@ -49,9 +80,11 @@ class NovelSegment(Base):
     content = Column(Text, nullable=False)
     token_count = Column(Integer, nullable=False)
     metadata_col: Mapped[dict[str, Any]] = Column("metadata", JSONB, nullable=False)
-    character_ids: Mapped[list[int]] = Column(
-        ARRAY(Integer), default=list, nullable=False
-    )
     embedding: Mapped[list[float] | None] = Column(Vector(3072))
 
     novel: Mapped[Novel] = relationship("Novel", back_populates="segments")
+    characters: Mapped[list["NovelCharacter"]] = relationship(
+        "NovelCharacter",
+        secondary=segment_characters,
+        back_populates="segments",
+    )
