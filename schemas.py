@@ -3,7 +3,8 @@ import re
 from pydantic import BaseModel, Field
 from typing import Optional
 
-from queries import RandomSegmentsRow, SegmentByIdRow, SimilarRow
+from models import NovelSegment
+from queries import RandomSegmentsRow, SimilarRow
 
 
 # --- Ingestion Schemas (For OpenAI) ---
@@ -37,7 +38,7 @@ class ChunkMetadata(BaseModel):
     )
 
 
-# --- API Endpoints Schemas (For FastAPI) ---
+# --- API Endpoints Schemas ---
 class SegmentResponse(BaseModel):
     id: int
     content: str
@@ -143,21 +144,24 @@ class SimilarSegmentPreview(BaseModel):
 class FullSegmentResponse(BaseModel):
     @staticmethod
     def from_row(
-        row: SegmentByIdRow,
+        row: NovelSegment,
         prev_segment_id: Optional[int] = None,
         next_segment_id: Optional[int] = None,
     ) -> "FullSegmentResponse":
         metadata = row.metadata_col
+        novel = row.novel
+
         return FullSegmentResponse(
             id=row.id,
-            novel_id=row.novel_id,
             content=row.content,
-            novel_title=row.title,
-            author=row.author,
-            year=row.publication_year,
+            novel_id=novel.id,
+            novel_title=novel.title,
+            author=novel.author,
+            year=novel.publication_year,
             mood=metadata.get("mood", "unknown"),
             themes=metadata.get("primary_themes", []),
             setting=metadata.get("setting", "Unknown"),
+            characters=[character.name for character in row.characters],
             prev_segment_id=prev_segment_id,
             next_segment_id=next_segment_id,
         )
@@ -170,6 +174,7 @@ class FullSegmentResponse(BaseModel):
     year: Optional[int]
     mood: str
     themes: list[ThemeAnnotation]
+    characters: list[str]
     setting: str
     prev_segment_id: Optional[int] = None
     next_segment_id: Optional[int] = None

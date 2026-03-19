@@ -53,6 +53,7 @@ class TestGetSegment:
                     "manifestation": "The character sits alone in an empty room.",
                 }
             ],
+            "characters": ["Alice"],
             "prev_segment_id": None,
             "next_segment_id": seg_b_id,
         }
@@ -128,15 +129,15 @@ class TestSimilarSegments:
     def test_ordered_by_similarity(
         self, client: TestClient, seed_data: SeedData
     ) -> None:
-        # seg_a and seg_c share the same embedding direction (index 0),
-        # while seg_b has a different one (index 1).
-        # So from seg_a, seg_c should be more similar than seg_b.
-        seg_id = seed_data["seg_a"].id
+        # Query from seg_c (novel_2). Excludes same-novel segments, so returns seg_a and seg_b (novel_1).
+        # seg_a and seg_c share embedding direction (index 0), seg_b has index 1.
+        # So seg_a should be more similar to seg_c than seg_b.
+        seg_id = seed_data["seg_c"].id
         response = client.get(f"/api/segments/{seg_id}/similar?limit=2")
         data = response.json()
         assert len(data) == 2
         assert data[0]["similarity_score"] >= data[1]["similarity_score"]
-        assert data[0]["id"] == seed_data["seg_c"].id
+        assert data[0]["id"] == seed_data["seg_a"].id
 
     def test_respects_limit(self, client: TestClient, seed_data: SeedData) -> None:
         seg_id = seed_data["seg_a"].id

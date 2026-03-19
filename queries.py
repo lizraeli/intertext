@@ -1,6 +1,6 @@
 from typing import Any, Optional, Protocol, Sequence
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from sqlalchemy.sql.expression import func
 from sqlalchemy import desc
 
@@ -53,30 +53,11 @@ def query_random_segments(db: Session, count: int) -> Sequence[RandomSegmentsRow
     )
 
 
-class SegmentByIdRow(Protocol):
-    id: int
-    novel_id: int
-    macro_block_id: int
-    content: str
-    metadata_col: dict[str, Any]
-    embedding: list[float]
-    title: str
-    author: str
-    publication_year: int | None
-
-
-def query_segment_by_id(db: Session, segment_id: int) -> SegmentByIdRow | None:
+def query_segment_by_id(db: Session, segment_id: int) -> NovelSegment | None:
     return (
-        db.query(
-            NovelSegment.id,
-            NovelSegment.novel_id,
-            NovelSegment.macro_block_id,
-            NovelSegment.content,
-            NovelSegment.metadata_col,
-            NovelSegment.embedding,
-            Novel.title,
-            Novel.author,
-            Novel.publication_year,
+        db.query(NovelSegment)
+        .options(
+            selectinload(NovelSegment.characters), selectinload(NovelSegment.novel)
         )
         .join(Novel, NovelSegment.novel_id == Novel.id)
         .filter(NovelSegment.id == segment_id)
@@ -142,7 +123,7 @@ class SimilarRow(Protocol):
 
 
 def query_similar_by_segment(
-    db: Session, segment_id: int, source: SegmentByIdRow, limit: int
+    db: Session, segment_id: int, source: NovelSegment, limit: int
 ) -> Sequence[SimilarRow]:
     """
     Query similar segments by segment id and source segment.

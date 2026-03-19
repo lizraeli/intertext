@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 
 from database import Base, get_db
 from main import app
-from models import Novel, NovelSegment
+from models import Novel, NovelCharacter, NovelSegment
 
 
 class SeedData(TypedDict):
@@ -153,6 +153,17 @@ def seed_data(db_session: Session) -> SeedData:
     )
 
     db_session.add_all([seg_a, seg_b, seg_c])
+    db_session.flush()
+
+    char_alice = NovelCharacter(novel_id=novel_1.id, name="Alice")
+    char_bob = NovelCharacter(novel_id=novel_1.id, name="Bob")
+    char_clara = NovelCharacter(novel_id=novel_2.id, name="Clara")
+    db_session.add_all([char_alice, char_bob, char_clara])
+    db_session.flush()
+
+    seg_a.characters = [char_alice]
+    seg_b.characters = [char_bob]
+    seg_c.characters = [char_clara]
     db_session.flush()
 
     return {
