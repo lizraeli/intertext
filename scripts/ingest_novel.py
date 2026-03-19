@@ -11,8 +11,10 @@ from chonkie.embeddings import OpenAIEmbeddings
 
 from sqlalchemy import func
 
+from sqlalchemy.orm import Session
+
 from database import SessionLocal
-from models import Novel, NovelSegment
+from models import Novel, NovelCharacter, NovelSegment
 from schemas import ChunkMetadata
 from scripts.chunkers import recursive_chunker
 from scripts.utils import BookData, get_chapter_blocks, parse_book_from_markdown
@@ -27,7 +29,7 @@ openai_embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
 EMBEDDING_MAX_TOKENS = 8191
 
 
-def extract_metadata(chunk_text: str) -> dict:
+def extract_chunk_metadata(chunk_text: str) -> ChunkMetadata:
     """Passes text to OpenAI gpt-4o-mini to extract structured JSON metadata."""
     completion = client.beta.chat.completions.parse(
         model="gpt-4o-mini",
@@ -41,7 +43,35 @@ def extract_metadata(chunk_text: str) -> dict:
         response_format=ChunkMetadata,
         temperature=0.4,
     )
-    return completion.choices[0].message.parsed.model_dump()
+    return completion.choices[0].message.parsed
+
+
+def get_or_create_character_ids(
+    db: Session, novel_id: int, character_names: list[str]
+) -> list[int]:
+    """Resolve character names to IDs, creating NovelCharacter rows as needed."""
+    ids = []
+    for name in character_names:
+        name = name.strip()
+        if not name:
+            continue
+
+        char = (
+            db.query(NovelCharacter)
+            .filter(
+                NovelCharacter.novel_id == novel_id,
+                NovelCharacter.name == name,
+            )
+            .first()
+        )
+        if char is None:
+            char = NovelCharacter(novel_id=novel_id, name=name)
+            db.add(char)
+            db.flush()
+
+        ids.append(char.id)
+
+    return ids
 
 
 def ingest_book_to_db(book: BookData):
@@ -106,7 +136,14 @@ def ingest_book_to_db(book: BookData):
             print(f"     Generated {len(segments)} segments.")
 
             for segment in segments:
-                metadata_json = extract_metadata(segment.text)
+                chunk_metadata = extract_chunk_metadata(segment.text)
+
+                character_ids = get_or_create_character_ids(
+                    db=db,
+                    novel_id=novel_record.id,
+                    character_names=chunk_metadata.characters,
+                )
+                metadata_json = chunk_metadata.model_dump()
                 metadata_json["chapter"] = chapter_data.chapter
                 embedding_vector = openai_embeddings.embed(segment.text)
 
@@ -118,6 +155,7 @@ def ingest_book_to_db(book: BookData):
                     content=segment.text.strip(),
                     token_count=segment.token_count,
                     metadata_col=metadata_json,
+                    character_ids=character_ids,
                     embedding=embedding_vector,
                 )
                 total_segments_processed += 1
