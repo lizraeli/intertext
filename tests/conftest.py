@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 
 from database import Base, get_db
 from main import app
-from models import Novel, NovelCharacter, NovelSegment
+from models import Novel, NovelCharacter, NovelPlace, NovelSegment
 
 
 class SeedData(TypedDict):
@@ -46,7 +46,7 @@ SEED_METADATA_A = {
         }
     ],
     "characters": ["Alice"],
-    "setting": "a dark room",
+    "place": "a dark room",
     "mood": "melancholic",
     "chapter": "Chapter 1",
 }
@@ -61,7 +61,7 @@ SEED_METADATA_B = {
         }
     ],
     "characters": ["Bob"],
-    "setting": "a hilltop",
+    "place": "a hilltop",
     "mood": "tender",
     "chapter": "Chapter 2",
 }
@@ -76,7 +76,7 @@ SEED_METADATA_C = {
         }
     ],
     "characters": ["Clara"],
-    "setting": "an abandoned city",
+    "place": "an abandoned city",
     "mood": "contemplative",
     "chapter": "Chapter 1",
 }
@@ -121,6 +121,12 @@ def seed_data(db_session: Session) -> SeedData:
     db_session.add_all([novel_1, novel_2])
     db_session.flush()
 
+    place_a = NovelPlace(novel_id=novel_1.id, name="a dark room")
+    place_b = NovelPlace(novel_id=novel_1.id, name="a hilltop")
+    place_c = NovelPlace(novel_id=novel_2.id, name="an abandoned city")
+    db_session.add_all([place_a, place_b, place_c])
+    db_session.flush()
+
     seg_a = NovelSegment(
         novel_id=novel_1.id,
         macro_block_id=0,
@@ -129,6 +135,7 @@ def seed_data(db_session: Session) -> SeedData:
         content="The room was empty and the silence pressed in from every side. She sat alone by the window.",
         token_count=20,
         metadata_col=SEED_METADATA_A,
+        place_id=place_a.id,
         embedding=_make_embedding(0),
     )
     seg_b = NovelSegment(
@@ -139,6 +146,7 @@ def seed_data(db_session: Session) -> SeedData:
         content="Light broke through the clouds at dawn. It was the first warmth she had felt in weeks.",
         token_count=18,
         metadata_col=SEED_METADATA_B,
+        place_id=place_b.id,
         embedding=_make_embedding(1),
     )
     seg_c = NovelSegment(
@@ -149,6 +157,7 @@ def seed_data(db_session: Session) -> SeedData:
         content="The streets were empty and silent. No one had walked here in years.",
         token_count=15,
         metadata_col=SEED_METADATA_C,
+        place_id=place_c.id,
         embedding=_make_embedding(0),
     )
 

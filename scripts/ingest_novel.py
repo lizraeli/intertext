@@ -5,7 +5,11 @@ from sqlalchemy import func
 
 from database import SessionLocal
 from models import Novel, NovelSegment
-from queries import get_novel_character_names, get_or_create_characters
+from queries import (
+    get_novel_character_names,
+    get_or_create_characters,
+    get_or_create_place,
+)
 from scripts.chunkers import recursive_chunker
 from scripts.llm import extract_chunk_metadata
 from scripts.utils import BookData, get_chapter_blocks, parse_book_from_markdown
@@ -93,6 +97,11 @@ def ingest_book_to_db(book: BookData):
                     novel_id=novel_record.id,
                     character_names=chunk_metadata.characters,
                 )
+                place = get_or_create_place(
+                    db=db,
+                    novel_id=novel_record.id,
+                    place_name=chunk_metadata.place,
+                )
                 metadata_json = chunk_metadata.model_dump()
                 metadata_json["chapter"] = chapter_data.chapter
                 embedding_vector = openai_embeddings.embed(chunk.text)
@@ -105,6 +114,7 @@ def ingest_book_to_db(book: BookData):
                     content=chunk.text.strip(),
                     token_count=chunk.token_count,
                     metadata_col=metadata_json,
+                    place_id=place.id,
                     embedding=embedding_vector,
                 )
                 db.add(segment)

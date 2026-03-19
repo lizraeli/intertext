@@ -44,7 +44,7 @@ class TestGetSegment:
             "author": "Test Author",
             "year": 2000,
             "mood": "melancholic",
-            "setting": "a dark room",
+            "place": "a dark room",
             "themes": [
                 {
                     "name": "isolation",

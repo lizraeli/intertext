@@ -29,6 +29,9 @@ class Novel(Base):
     characters = relationship(
         "NovelCharacter", back_populates="novel", cascade="all, delete-orphan"
     )
+    places = relationship(
+        "NovelPlace", back_populates="novel", cascade="all, delete-orphan"
+    )
 
 
 segment_characters = Table(
@@ -68,11 +71,31 @@ class NovelCharacter(Base):
     )
 
 
+class NovelPlace(Base):
+    __tablename__ = "novel_places"
+    __table_args__ = (UniqueConstraint("novel_id", "name", name="uq_novel_place_name"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    novel_id = Column(Integer, ForeignKey("novels.id"), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+
+    novel: Mapped[Novel] = relationship("Novel", back_populates="places")
+    segments: Mapped[list["NovelSegment"]] = relationship(
+        "NovelSegment", back_populates="place"
+    )
+
+
 class NovelSegment(Base):
     __tablename__ = "novel_segments"
 
     id = Column(Integer, primary_key=True, index=True)
     novel_id = Column(Integer, ForeignKey("novels.id"), nullable=False, index=True)
+    place_id: Mapped[int] = Column(
+        Integer,
+        ForeignKey("novel_places.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
 
     macro_block_id = Column(Integer, nullable=False)
     start_index = Column(Integer, nullable=False)
@@ -88,3 +111,4 @@ class NovelSegment(Base):
         secondary=segment_characters,
         back_populates="segments",
     )
+    place: Mapped["NovelPlace"] = relationship("NovelPlace", back_populates="segments")

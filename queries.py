@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session, selectinload
 from sqlalchemy.sql.expression import func
 from sqlalchemy import desc
 
-from models import Novel, NovelCharacter, NovelSegment
+from models import Novel, NovelCharacter, NovelPlace, NovelSegment
 
 
 def query_novel_segments(db: Session, novel_id: int):
@@ -57,7 +57,9 @@ def query_segment_by_id(db: Session, segment_id: int) -> NovelSegment | None:
     return (
         db.query(NovelSegment)
         .options(
-            selectinload(NovelSegment.characters), selectinload(NovelSegment.novel)
+            selectinload(NovelSegment.characters),
+            selectinload(NovelSegment.place),
+            selectinload(NovelSegment.novel),
         )
         .join(Novel, NovelSegment.novel_id == Novel.id)
         .filter(NovelSegment.id == segment_id)
@@ -194,6 +196,24 @@ def get_or_create_characters(
         result.append(char)
 
     return result
+
+
+def get_or_create_place(db: Session, novel_id: int, place_name: str) -> NovelPlace:
+    """Resolve place name to NovelPlace, creating if needed. Uses 'unknown' for empty or 'unknown'."""
+    name = place_name.strip()
+    if not name or name.lower() == "unknown":
+        name = "unknown"
+
+    place = (
+        db.query(NovelPlace)
+        .filter(NovelPlace.novel_id == novel_id, NovelPlace.name == name)
+        .first()
+    )
+    if place is None:
+        place = NovelPlace(novel_id=novel_id, name=name)
+        db.add(place)
+        db.flush()
+    return place
 
 
 def get_novel_character_names(db: Session, novel_id: int) -> list[str]:

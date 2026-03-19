@@ -30,8 +30,8 @@ class ChunkMetadata(BaseModel):
     characters: list[str] = Field(
         description="Names of characters actively participating or mentioned."
     )
-    setting: str = Field(
-        description="The physical location, if discernible. Return 'Unknown' if not stated."
+    place: str = Field(
+        description="The physical place where this passage occurs. Return 'unknown' if not stated."
     )
     mood: str = Field(
         description="A single word describing the emotional tone (e.g., 'melancholic', 'tense')."
@@ -160,7 +160,7 @@ class FullSegmentResponse(BaseModel):
             year=novel.publication_year,
             mood=metadata.get("mood", "unknown"),
             themes=metadata.get("primary_themes", []),
-            setting=metadata.get("setting", "Unknown"),
+            place=row.place.name if row.place else metadata.get("place", "unknown"),
             characters=[character.name for character in row.characters],
             prev_segment_id=prev_segment_id,
             next_segment_id=next_segment_id,
@@ -175,6 +175,6 @@ class FullSegmentResponse(BaseModel):
     mood: str
     themes: list[ThemeAnnotation]
     characters: list[str]
-    setting: str
+    place: str
     prev_segment_id: Optional[int] = None
     next_segment_id: Optional[int] = None
