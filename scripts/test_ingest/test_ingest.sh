@@ -1,0 +1,1 @@
+PYTHONPATH=. python scripts/test_ingest/test_ingest.py

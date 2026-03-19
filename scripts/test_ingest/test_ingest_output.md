@@ -1,0 +1,188 @@
+## segment chnk_47f28217fd6d40cbab1f4fe0bf3ee541
+
+Along this particular stretch of line no express had ever passed. All the trains--the few that there were--stopped at all the stations. Denis knew the names of those stations by heart. Bole, Tritton, Spavin Delawarr, Knipswich for Timpany, West Bowlby, and, finally, Camlet-on-the-Water. Camlet was where he always got out, leaving the train to creep indolently onward, goodness only knew whither, into the green heart of England.
+
+They were snorting out of West Bowlby now. It was the next station, thank Heaven. Denis took his chattels off the rack and piled them neatly in the corner opposite his own. A futile proceeding. But one must have something to do. When he had finished, he sank back into his seat and closed his eyes. It was extremely hot.
+
+
+## segment chnk_f66a965510014bd4b15d0a3805f9a46e
+
+Oh, this journey! It was two hours cut clean out of his life; two hours in which he might have done so much, so much--written the perfect poem, for example, or read the one illuminating book. Instead of which--his gorge rose at the smell of the dusty cushions against which he was leaning.
+
+Two hours. One hundred and twenty minutes. Anything might be done in that time. Anything. Nothing. Oh, he had had hundreds of hours, and what had he done with them? Wasted them, spilt the precious minutes as though his reservoir were inexhaustible. Denis groaned in the spirit, condemned himself utterly with all his works. What right had he to sit in the sunshine, to occupy corner seats in third-class carriages, to be alive? None, none, none.
+
+Misery and a nameless nostalgic distress possessed him. He was twenty-three, and oh! so agonizingly conscious of the fact.
+
+
+## segment chnk_e0ed08974713419dae0987ad85505992
+
+The train came bumpingly to a halt. Here was Camlet at last. Denis jumped up, crammed his hat over his eyes, deranged his pile of baggage, leaned out of the window and shouted for a porter, seized a bag in either hand, and had to put them down again in order to open the door. When at last he had safely bundled himself and his baggage on to the platform, he ran up the train towards the van.
+
+"A bicycle, a bicycle!" he said breathlessly to the guard. He felt himself a man of action. The guard paid no attention, but continued methodically to hand out, one by one, the packages labelled to Camlet. "A bicycle!" Denis repeated. "A green machine, cross-framed, name of Stone. S-T-O-N-E."
+
+"All in good time, sir," said the guard soothingly. He was a large, stately man with a naval beard. One pictured him at home, drinking tea, surrounded by a numerous family. It was in that tone that he must have spoken to his children when they were tiresome. "All in good time, sir." Denis's man of action collapsed, punctured.
+
+
+## segment chnk_dd53d59375b7442ca3357637e08e81e8
+
+He left his luggage to be called for later, and pushed off on his bicycle. He always took his bicycle when he went into the country. It was part of the theory of exercise. One day one would get up at six o'clock and pedal away to Kenilworth, or Stratford-on-Avon--anywhere. And within a radius of twenty miles there were always Norman churches and Tudor mansions to be seen in the course of an afternoon's excursion. Somehow they never did get seen, but all the same it was nice to feel that the bicycle was there, and that one fine morning one really might get up at six.
+
+
+## segment chnk_4e8077b0e4dd4ba6b234d8faf1bcb031
+
+Once at the top of the long hill which led up from Camlet station, he felt his spirits mounting. The world, he found, was good. The far-away blue hills, the harvests whitening on the slopes of the ridge along which his road led him, the treeless sky-lines that changed as he moved--yes, they were all good. He was overcome by the beauty of those deeply embayed combes, scooped in the flanks of the ridge beneath him. Curves, curves: he repeated the word slowly, trying as he did so to find some term in which to give expression to his appreciation. Curves--no, that was inadequate. He made a gesture with his hand, as though to scoop the achieved expression out of the air, and almost fell off his bicycle. What was the word to describe the curves of those little valleys? They were as fine as the lines of a human body, they were informed with the subtlety of art...
+
+
+## segment chnk_c4b6e3dbe2d547c781ff9a1d9d9cbfb0
+
+Galbe. That was a good word; but it was French. Le galbe evase de ses hanches: had one ever read a French novel in which that phrase didn't occur? Some day he would compile a dictionary for the use of novelists. Galbe, gonfle, goulu: parfum, peau, pervers, potele, pudeur: vertu, volupte.
+
+But he really must find that word. Curves curves...Those little valleys had the lines of a cup moulded round a woman's breast; they seemed the dinted imprints of some huge divine body that had rested on these hills. Cumbrous locutions, these; but through them he seemed to be getting nearer to what he wanted. Dinted, dimpled, wimpled--his mind wandered down echoing corridors of assonance and alliteration ever further and further from the point. He was enamoured with the beauty of words.
+
+
+## segment chnk_3a0cdc5533744ccda5590f233f2dbb7c
+
+Becoming once more aware of the outer world, he found himself on the crest of a descent. The road plunged down, steep and straight, into a considerable valley. There, on the opposite slope, a little higher up the valley, stood Crome, his destination. He put on his brakes; this view of Crome was pleasant to linger over. The facade with its three projecting towers rose precipitously from among the dark trees of the garden. The house basked in full sunlight; the old brick rosily glowed. How ripe and rich it was, how superbly mellow! And at the same time, how austere! The hill was becoming steeper and steeper; he was gaining speed in spite of his brakes. He loosed his grip of the levers, and in a moment was rushing headlong down. Five minutes later he was passing through the gate of the great courtyard. The front door stood hospitably open. He left his bicycle leaning against the wall and walked in. He would take them by surprise.
+
+
+## segment chnk_23243d33e903487ebb094294254c0b54
+
+He took nobody by surprise; there was nobody to take. All was quiet; Denis wandered from room to empty room, looking with pleasure at the familiar pictures and furniture, at all the little untidy signs of life that lay scattered here and there. He was rather glad that they were all out; it was amusing to wander through the house as though one were exploring a dead, deserted Pompeii. What sort of life would the excavator reconstruct from these remains; how would he people these empty chambers? There was the long gallery, with its rows of respectable and (though, of course, one couldn't publicly admit it) rather boring Italian primitives, its Chinese sculptures, its unobtrusive, dateless furniture. There was the panelled drawing-room, where the huge chintz-covered arm-chairs stood, oases of comfort among the austere flesh-mortifying antiques. There was the morning-room, with its pale lemon walls, its painted Venetian chairs and rococo tables, its mirrors, its modern pictures. There was the library, cool, spacious, and dark, book-lined from floor to ceiling, rich in portentous folios. There was the dining-room, solidly, portwinily English, with its great mahogany table, its eighteenth-century chairs and sideboard, its eighteenth-century pictures--family portraits, meticulous animal paintings. What could one reconstruct from such data? There was much of Henry Wimbush in the long gallery and the library, something of Anne, perhaps, in the morning-room. That was all. Among the accumulations of ten generations the living had left but few traces.
+
+
+## segment chnk_695366c7608146818ed296fa0f86ee26
+
+Lying on the table in the morning-room he saw his own book of poems. What tact! He picked it up and opened it. It was what the reviewers call "a slim volume." He read at hazard:
+
+
+_"...But silence and the topless dark_ _Vault in the lights of Luna Park;_ _And Blackpool from the nightly gloom_ _Hollows a bright tumultuous tomb."_
+
+
+## segment chnk_ca11e921efad4926b5ac0ffcf1f5406d
+
+He put it down again, shook his head, and sighed. "What genius I had then!" he reflected, echoing the aged Swift. It was nearly six months since the book had been published; he was glad to think he would never write anything of the same sort again. Who could have been reading it, he wondered? Anne, perhaps; he liked to think so. Perhaps, too, she had at last recognised herself in the Hamadryad of the poplar sapling; the slim Hamadryad whose movements were like the swaying of a young tree in the wind. "The Woman who was a Tree" was what he had called the poem. He had given her the book when it came out, hoping that the poem would tell her what he hadn't dared to say. She had never referred to it.
+
+He shut his eyes and saw a vision of her in a red velvet cloak, swaying into the little restaurant where they sometimes dined together in London--three quarters of an hour late, and he at his table, haggard with anxiety, irritation, hunger. Oh, she was damnable!
+
+
+## segment chnk_a62e242219fc4e4caa50ba7d0634a793
+
+It occurred to him that perhaps his hostess might be in her boudoir. It was a possibility; he would go and see. Mrs. Wimbush's boudoir was in the central tower on the garden front. A little staircase cork-screwed up to it from the hall. Denis mounted, tapped at the door. "Come in." Ah, she was there; he had rather hoped she wouldn't be. He opened the door.
+
+Priscilla Wimbush was lying on the sofa. A blotting-pad rested on her knees and she was thoughtfully sucking the end of a silver pencil.
+
+"Hullo," she said, looking up. "I'd forgotten you were coming."
+
+"Well, here I am, I'm afraid," said Denis deprecatingly. "I'm awfully sorry."
+
+Mrs. Wimbush laughed. Her voice, her laughter, were deep and masculine. Everything about her was manly. She had a large, square, middle-aged face, with a massive projecting nose and little greenish eyes, the whole surmounted by a lofty and elaborate coiffure of a curiously improbable shade of orange. Looking at her, Denis always thought of Wilkie Bard as the cantatrice.
+
+
+## segment chnk_249921be983e4a83914694a787da5261
+
+_"That's why I'm going to_ _Sing in op'ra, sing in op'ra,_ _Sing in op-pop-pop-pop-pop-popera."_
+
+
+Today she was wearing a purple silk dress with a high collar and a row of pearls. The costume, so richly dowagerish, so suggestive of the Royal Family, made her look more than ever like something on the Halls.
+
+"What have you been doing all this time?" she asked.
+
+"Well," said Denis, and he hesitated, almost voluptuously. He had a tremendously amusing account of London and its doings all ripe and ready in his mind. It would be a pleasure to give it utterance. "To begin with," he said...
+
+But he was too late. Mrs. Wimbush's question had been what the grammarians call rhetorical; it asked for no answer. It was a little conversational flourish, a gambit in the polite game.
+
+"You find me busy at my horoscopes," she said, without even being aware that she had interrupted him.
+
+
+## segment chnk_a5edce8a0e894d04ba7d95b15f41cbf1
+
+A little pained, Denis decided to reserve his story for more receptive ears. He contented himself, by way of revenge, with saying "Oh?" rather icily.
+
+"Did I tell you how I won four hundred on the Grand National this year?"
+
+"Yes," he replied, still frigid and mono-syllabic. She must have told him at least six times.
+
+"Wonderful, isn't it? Everything is in the Stars. In the Old Days, before I had the Stars to help me, I used to lose thousands. Now"--she paused an instant--"well, look at that four hundred on the Grand National. That's the Stars."
+
+
+## segment chnk_38769c7c3e514c529c7a99c016cce0b0
+
+Denis would have liked to hear more about the Old Days. But he was too discreet and, still more, too shy to ask. There had been something of a bust up; that was all he knew. Old Priscilla--not so old then, of course, and sprightlier--had lost a great deal of money, dropped it in handfuls and hatfuls on every race-course in the country. She had gambled too. The number of thousands varied in the different legends, but all put it high. Henry Wimbush was forced to sell some of his Primitives--a Taddeo da Poggibonsi, an Amico di Taddeo, and four or five nameless Sienese--to the Americans. There was a crisis. For the first time in his life Henry asserted himself, and with good effect, it seemed.
+
+
+## segment chnk_f90e9772328d4bb0ba59aa2cca522d48
+
+Priscilla's gay and gadding existence had come to an abrupt end. Nowadays she spent almost all her time at Crome, cultivating a rather ill-defined malady. For consolation she dallied with New Thought and the Occult. Her passion for racing still possessed her, and Henry, who was a kind-hearted fellow at bottom, allowed her forty pounds a month betting money. Most of Priscilla's days were spent in casting the horoscopes of horses, and she invested her money scientifically, as the stars dictated. She betted on football too, and had a large notebook in which she registered the horoscopes of all the players in all the teams of the League. The process of balancing the horoscopes of two elevens one against the other was a very delicate and difficult one. A match between the Spurs and the Villa entailed a conflict in the heavens so vast and so complicated that it was not to be wondered at if she sometimes made a mistake about the outcome.
+
+
+## segment chnk_7e6799156420466fb0b27516274de171
+
+"Such a pity you don't believe in these things, Denis, such a pity," said Mrs. Wimbush in her deep, distinct voice.
+
+"I can't say I feel it so."
+
+
+## segment chnk_6b459b2282f143caa42ec6755f537e07
+
+"Ah, that's because you don't know what it's like to have faith. You've no idea how amusing and exciting life becomes when you do believe. All that happens means something; nothing you do is ever insignificant. It makes life so jolly, you know. Here am I at Crome. Dull as ditchwater, you'd think; but no, I don't find it so. I don't regret the Old Days a bit. I have the Stars..." She picked up the sheet of paper that was lying on the blotting-pad. "Inman's horoscope," she explained. "(I thought I'd like to have a little fling on the billiards championship this autumn.) I have the Infinite to keep in tune with," she waved her hand. "And then there's the next world and all the spirits, and one's Aura, and Mrs. Eddy and saying you're not ill, and the Christian Mysteries and Mrs. Besant. It's all splendid. One's never dull for a moment. I can't think how I used to get on before--in the Old Days. Pleasure--running about, that's all it was; just running about. Lunch, tea, dinner, theatre, supper every day. It was fun, of course, while it lasted. But there wasn't much left of it afterwards. There's rather a good thing about that in Barbecue-Smith's new book. Where is it?"
+
+
+## segment chnk_5b888a4e2dd145e497d3186d264c9ec9
+
+She sat up and reached for a book that was lying on the little table by the head of the sofa.
+
+"Do you know him, by the way?" she asked.
+
+"Who?"
+
+"Mr. Barbecue-Smith."
+
+Denis knew of him vaguely. Barbecue-Smith was a name in the Sunday papers. He wrote about the Conduct of Life. He might even be the author of "What a Young Girl Ought to Know".
+
+"No, not personally," he said.
+
+"I've invited him for next week-end." She turned over the pages of the book. "Here's the passage I was thinking of. I marked it. I always mark the things I like."
+
+Holding the book almost at arm's length, for she was somewhat long-sighted, and making suitable gestures with her free hand, she began to read, slowly, dramatically.
+
+
+## segment chnk_e5b9c4b0cbc14d7bb29e354f81d09d34
+
+"'What are thousand pound fur coats, what are quarter million incomes?'" She looked up from the page with a histrionic movement of the head; her orange coiffure nodded portentously. Denis looked at it, fascinated. Was it the Real Thing and henna, he wondered, or was it one of those Complete Transformations one sees in the advertisements?
+
+"'What are Thrones and Sceptres?'"
+
+The orange Transformation--yes, it must be a Transformation--bobbed up again.
+
+"'What are the gaieties of the Rich, the splendours of the Powerful, what is the pride of the Great, what are the gaudy pleasures of High Society?'"
+
+The voice, which had risen in tone, questioningly, from sentence to sentence, dropped suddenly and boomed reply.
+
+"'They are nothing. Vanity, fluff, dandelion seed in the wind, thin vapours of fever. The things that matter happen in the heart. Seen things are sweet, but those unseen are a thousand times more significant. It is the unseen that counts in Life.'"
+
+
+## segment chnk_392d938ce97b422185d32484d435a3bc
+
+Mrs. Wimbush lowered the book. "Beautiful, isn't it?" she said.
+
+Denis preferred not to hazard an opinion, but uttered a non-committal "H'm."
+
+
+## segment chnk_a1afb017b2674964b0638dc01fb5338e
+
+"Ah, it's a fine book this, a beautiful book," said Priscilla, as she let the pages flick back, one by one, from under her thumb. "And here's the passage about the Lotus Pool. He compares the Soul to a Lotus Pool, you know." She held up the book again and read. "'A Friend of mine has a Lotus Pool in his garden. It lies in a little dell embowered with wild roses and eglantine, among which the nightingale pours forth its amorous descant all the summer long. Within the pool the Lotuses blossom, and the birds of the air come to drink and bathe themselves in its crystal waters...' Ah, and that reminds me," Priscilla exclaimed, shutting the book with a clap and uttering her big profound laugh--"that reminds me of the things that have been going on in our bathing-pool since you were here last. We gave the village people leave to come and bathe here in the evenings. You've no idea of the things that happened."
+
+
+## segment chnk_5be90b3cca6c4de49f3d302a3d75f365
+
+She leaned forward, speaking in a confidential whisper; every now and then she uttered a deep gurgle of laughter. "...mixed bathing...saw them out of my window...sent for a pair of field-glasses to make sure...no doubt of it..." The laughter broke out again. Denis laughed too. Barbecue-Smith was tossed on the floor.
+
+"It's time we went to see if tea's ready," said Priscilla. She hoisted herself up from the sofa and went swishing off across the room, striding beneath the trailing silk. Denis followed her, faintly humming to himself:
+
+
+_"That's why I'm going to_ _Sing in op'ra, sing in op'ra,_ _Sing in op-pop-pop-pop-pop-popera."_
+
+
+And then the little twiddly bit of accompaniment at the end: "ra-ra."
+
+
