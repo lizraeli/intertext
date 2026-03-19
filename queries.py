@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session, selectinload
 from sqlalchemy.sql.expression import func
 from sqlalchemy import desc
 
-from models import Novel, NovelCharacter, NovelPlace, NovelSegment
+from models import Novel, NovelCharacter, NovelMood, NovelPlace, NovelSegment
 
 
 def query_novel_segments(db: Session, novel_id: int):
@@ -59,6 +59,7 @@ def query_segment_by_id(db: Session, segment_id: int) -> NovelSegment | None:
         .options(
             selectinload(NovelSegment.characters),
             selectinload(NovelSegment.place),
+            selectinload(NovelSegment.mood),
             selectinload(NovelSegment.novel),
         )
         .join(Novel, NovelSegment.novel_id == Novel.id)
@@ -214,6 +215,24 @@ def get_or_create_place(db: Session, novel_id: int, place_name: str) -> NovelPla
         db.add(place)
         db.flush()
     return place
+
+
+def get_or_create_mood(db: Session, novel_id: int, mood_name: str) -> NovelMood:
+    """Resolve mood name to NovelMood, creating if needed. Uses 'unknown' for empty or 'unknown'."""
+    name = mood_name.strip()
+    if not name or name.lower() == "unknown":
+        name = "unknown"
+
+    mood = (
+        db.query(NovelMood)
+        .filter(NovelMood.novel_id == novel_id, NovelMood.name == name)
+        .first()
+    )
+    if mood is None:
+        mood = NovelMood(novel_id=novel_id, name=name)
+        db.add(mood)
+        db.flush()
+    return mood
 
 
 def get_novel_character_names(db: Session, novel_id: int) -> list[str]:

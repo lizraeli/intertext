@@ -8,6 +8,7 @@ from models import Novel, NovelSegment
 from queries import (
     get_novel_character_names,
     get_or_create_characters,
+    get_or_create_mood,
     get_or_create_place,
 )
 from scripts.chunkers import recursive_chunker
@@ -102,6 +103,11 @@ def ingest_book_to_db(book: BookData):
                     novel_id=novel_record.id,
                     place_name=chunk_metadata.place,
                 )
+                mood = get_or_create_mood(
+                    db=db,
+                    novel_id=novel_record.id,
+                    mood_name=chunk_metadata.mood,
+                )
                 metadata_json = chunk_metadata.model_dump()
                 metadata_json["chapter"] = chapter_data.chapter
                 embedding_vector = openai_embeddings.embed(chunk.text)
@@ -115,6 +121,7 @@ def ingest_book_to_db(book: BookData):
                     token_count=chunk.token_count,
                     metadata_col=metadata_json,
                     place_id=place.id,
+                    mood_id=mood.id,
                     embedding=embedding_vector,
                 )
                 db.add(segment)

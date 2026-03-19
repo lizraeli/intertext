@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 
 from database import Base, get_db
 from main import app
-from models import Novel, NovelCharacter, NovelPlace, NovelSegment
+from models import Novel, NovelCharacter, NovelMood, NovelPlace, NovelSegment
 
 
 class SeedData(TypedDict):
@@ -127,6 +127,12 @@ def seed_data(db_session: Session) -> SeedData:
     db_session.add_all([place_a, place_b, place_c])
     db_session.flush()
 
+    mood_a = NovelMood(novel_id=novel_1.id, name="melancholic")
+    mood_b = NovelMood(novel_id=novel_1.id, name="tender")
+    mood_c = NovelMood(novel_id=novel_2.id, name="contemplative")
+    db_session.add_all([mood_a, mood_b, mood_c])
+    db_session.flush()
+
     seg_a = NovelSegment(
         novel_id=novel_1.id,
         macro_block_id=0,
@@ -136,6 +142,7 @@ def seed_data(db_session: Session) -> SeedData:
         token_count=20,
         metadata_col=SEED_METADATA_A,
         place_id=place_a.id,
+        mood_id=mood_a.id,
         embedding=_make_embedding(0),
     )
     seg_b = NovelSegment(
@@ -147,6 +154,7 @@ def seed_data(db_session: Session) -> SeedData:
         token_count=18,
         metadata_col=SEED_METADATA_B,
         place_id=place_b.id,
+        mood_id=mood_b.id,
         embedding=_make_embedding(1),
     )
     seg_c = NovelSegment(
@@ -158,6 +166,7 @@ def seed_data(db_session: Session) -> SeedData:
         token_count=15,
         metadata_col=SEED_METADATA_C,
         place_id=place_c.id,
+        mood_id=mood_c.id,
         embedding=_make_embedding(0),
     )
 

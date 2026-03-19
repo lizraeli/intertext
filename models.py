@@ -32,6 +32,9 @@ class Novel(Base):
     places = relationship(
         "NovelPlace", back_populates="novel", cascade="all, delete-orphan"
     )
+    moods = relationship(
+        "NovelMood", back_populates="novel", cascade="all, delete-orphan"
+    )
 
 
 segment_characters = Table(
@@ -85,6 +88,20 @@ class NovelPlace(Base):
     )
 
 
+class NovelMood(Base):
+    __tablename__ = "novel_moods"
+    __table_args__ = (UniqueConstraint("novel_id", "name", name="uq_novel_mood_name"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    novel_id = Column(Integer, ForeignKey("novels.id"), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+
+    novel: Mapped[Novel] = relationship("Novel", back_populates="moods")
+    segments: Mapped[list["NovelSegment"]] = relationship(
+        "NovelSegment", back_populates="mood"
+    )
+
+
 class NovelSegment(Base):
     __tablename__ = "novel_segments"
 
@@ -93,6 +110,12 @@ class NovelSegment(Base):
     place_id: Mapped[int] = Column(
         Integer,
         ForeignKey("novel_places.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    mood_id: Mapped[int] = Column(
+        Integer,
+        ForeignKey("novel_moods.id", ondelete="RESTRICT"),
         nullable=False,
         index=True,
     )
@@ -112,3 +135,4 @@ class NovelSegment(Base):
         back_populates="segments",
     )
     place: Mapped["NovelPlace"] = relationship("NovelPlace", back_populates="segments")
+    mood: Mapped["NovelMood"] = relationship("NovelMood", back_populates="segments")
