@@ -1,68 +1,20 @@
-import re
 import time
-from typing import List
 from dotenv import load_dotenv
-import tiktoken
-
-from openai import OpenAI
-from chonkie import SemanticChunker
 from chonkie.embeddings import OpenAIEmbeddings
-
-
 from sqlalchemy import func
 
-from sqlalchemy.orm import Session
-
 from database import SessionLocal
-from models import Novel, NovelCharacter, NovelSegment
+from models import Novel, NovelSegment
 from queries import get_novel_character_names, get_or_create_characters
-from schemas import ChunkMetadata
 from scripts.chunkers import recursive_chunker
+from scripts.llm import extract_chunk_metadata
 from scripts.utils import BookData, get_chapter_blocks, parse_book_from_markdown
 
 load_dotenv()
 
-# Initialize OpenAI Client (automatically picks up OPENAI_API_KEY from the environment)
-client = OpenAI()
-
 openai_embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
 
 EMBEDDING_MAX_TOKENS = 8191
-
-
-def extract_chunk_metadata(
-    chunk_text: str,
-    book: BookData,
-    known_character_names: list[str] | None = None,
-) -> ChunkMetadata:
-    """Extracts metadata from a chunk of text."""
-    character_instructions = (
-        f'Known characters already identified in this novel (use these exact names when the passage refers to them): {", ".join(known_character_names)}\n\n'
-        if known_character_names
-        else ""
-    )
-    character_instructions += """For character names: Use the fullest canonical form you know for each character (e.g., "Jane Eyre" not "Jane" or "the narrator"; "Georgiana Reed" not "Georgiana"). Do not treat nicknames, titles, or narrator references as separate characters—consolidate them into the single canonical name for that person."""
-    if known_character_names:
-        character_instructions += " For any new character not in the known list, use the fullest canonical form. Do not create duplicates—if a character is in the known list, use that exact name even when the text uses a nickname."
-
-    system_content = f"""You are an expert literary analyst. Extract the requested metadata from this book excerpt.
-
-This excerpt is from "{book.title}" by {book.author}.
-
-{character_instructions}"""
-    completion = client.beta.chat.completions.parse(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": system_content},
-            {
-                "role": "user",
-                "content": f'Excerpt from "{book.title}" by {book.author}:\n\n{chunk_text}',
-            },
-        ],
-        response_format=ChunkMetadata,
-        temperature=0.4,
-    )
-    return completion.choices[0].message.parsed
 
 
 def ingest_book_to_db(book: BookData):
