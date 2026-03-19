@@ -2,6 +2,48 @@ from fastapi.testclient import TestClient
 from tests.conftest import SeedData
 
 
+class TestNovelChapters:
+    def test_returns_chapters_ordered(
+        self, client: TestClient, seed_data: SeedData
+    ) -> None:
+        novel_id = seed_data["novel_1"].id
+        seg_a = seed_data["seg_a"]
+        seg_b = seed_data["seg_b"]
+        response = client.get(f"/api/novels/{novel_id}/chapters")
+        assert response.status_code == 200
+        assert response.json() == [
+            {
+                "id": seg_a.chapter_id,
+                "title": "Chapter 1",
+                "block_index": 0,
+            },
+            {
+                "id": seg_b.chapter_id,
+                "title": "Chapter 2",
+                "block_index": 1,
+            },
+        ]
+
+    def test_single_chapter_novel(
+        self, client: TestClient, seed_data: SeedData
+    ) -> None:
+        novel_id = seed_data["novel_2"].id
+        seg_c = seed_data["seg_c"]
+        response = client.get(f"/api/novels/{novel_id}/chapters")
+        assert response.status_code == 200
+        assert response.json() == [
+            {
+                "id": seg_c.chapter_id,
+                "title": "Chapter 1",
+                "block_index": 0,
+            },
+        ]
+
+    def test_not_found(self, client: TestClient, seed_data: SeedData) -> None:
+        response = client.get("/api/novels/999999/chapters")
+        assert response.status_code == 404
+
+
 class TestRandomSegments:
     def test_returns_requested_count(
         self, client: TestClient, seed_data: SeedData
@@ -36,6 +78,7 @@ class TestGetSegment:
         seg_b_id = seed_data["seg_b"].id
         response = client.get(f"/api/segments/{seg_id}")
         assert response.status_code == 200
+        seg_a = seed_data["seg_a"]
         assert response.json() == {
             "id": seg_id,
             "novel_id": seed_data["novel_1"].id,
@@ -54,6 +97,8 @@ class TestGetSegment:
                 }
             ],
             "characters": ["Alice"],
+            "chapter_id": seg_a.chapter_id,
+            "chapter_title": "Chapter 1",
             "prev_segment_id": None,
             "next_segment_id": seg_b_id,
         }

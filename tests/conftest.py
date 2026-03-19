@@ -12,6 +12,7 @@ from main import app
 from models import (
     Novel,
     NovelCharacter,
+    NovelChapter,
     NovelMood,
     NovelPlace,
     NovelSegment,
@@ -141,9 +142,21 @@ def seed_data(db_session: Session) -> SeedData:
     db_session.add_all([mood_a, mood_b, mood_c])
     db_session.flush()
 
+    chapter_n1_b0 = NovelChapter(
+        novel_id=novel_1.id, block_index=0, title="Chapter 1"
+    )
+    chapter_n1_b1 = NovelChapter(
+        novel_id=novel_1.id, block_index=1, title="Chapter 2"
+    )
+    chapter_n2_b0 = NovelChapter(
+        novel_id=novel_2.id, block_index=0, title="Chapter 1"
+    )
+    db_session.add_all([chapter_n1_b0, chapter_n1_b1, chapter_n2_b0])
+    db_session.flush()
+
     seg_a = NovelSegment(
         novel_id=novel_1.id,
-        macro_block_id=0,
+        chapter_id=chapter_n1_b0.id,
         start_index=0,
         end_index=100,
         content="The room was empty and the silence pressed in from every side. She sat alone by the window.",
@@ -155,7 +168,7 @@ def seed_data(db_session: Session) -> SeedData:
     )
     seg_b = NovelSegment(
         novel_id=novel_1.id,
-        macro_block_id=1,
+        chapter_id=chapter_n1_b1.id,
         start_index=101,
         end_index=200,
         content="Light broke through the clouds at dawn. It was the first warmth she had felt in weeks.",
@@ -167,7 +180,7 @@ def seed_data(db_session: Session) -> SeedData:
     )
     seg_c = NovelSegment(
         novel_id=novel_2.id,
-        macro_block_id=0,
+        chapter_id=chapter_n2_b0.id,
         start_index=0,
         end_index=150,
         content="The streets were empty and silent. No one had walked here in years.",

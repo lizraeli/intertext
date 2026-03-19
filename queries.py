@@ -7,6 +7,7 @@ from sqlalchemy import desc
 from models import (
     Novel,
     NovelCharacter,
+    NovelChapter,
     NovelMood,
     NovelPlace,
     NovelSegment,
@@ -16,6 +17,19 @@ from models import (
 from llm_schemas import ThemeAnnotation
 
 
+def query_novel_by_id(db: Session, novel_id: int) -> Novel | None:
+    return db.query(Novel).filter(Novel.id == novel_id).first()
+
+
+def query_chapters_for_novel(db: Session, novel_id: int) -> list[NovelChapter]:
+    return (
+        db.query(NovelChapter)
+        .filter(NovelChapter.novel_id == novel_id)
+        .order_by(NovelChapter.block_index)
+        .all()
+    )
+
+
 def query_novel_segments(db: Session, novel_id: int):
     return (
         db.query(NovelSegment)
@@ -23,10 +37,12 @@ def query_novel_segments(db: Session, novel_id: int):
             selectinload(NovelSegment.characters),
             selectinload(NovelSegment.place),
             selectinload(NovelSegment.mood),
+            selectinload(NovelSegment.chapter),
             selectinload(NovelSegment.themes).selectinload(SegmentTheme.theme),
         )
+        .join(NovelChapter, NovelSegment.chapter_id == NovelChapter.id)
         .filter(NovelSegment.novel_id == novel_id)
-        .order_by(NovelSegment.macro_block_id, NovelSegment.id)
+        .order_by(NovelChapter.block_index, NovelSegment.id)
         .all()
     )
 
@@ -75,6 +91,7 @@ def query_segment_by_id(db: Session, segment_id: int) -> NovelSegment | None:
             selectinload(NovelSegment.characters),
             selectinload(NovelSegment.place),
             selectinload(NovelSegment.mood),
+            selectinload(NovelSegment.chapter),
             selectinload(NovelSegment.themes).selectinload(SegmentTheme.theme),
             selectinload(NovelSegment.novel),
         )
@@ -85,20 +102,21 @@ def query_segment_by_id(db: Session, segment_id: int) -> NovelSegment | None:
 
 
 def query_prev_segment_id(
-    db: Session, novel_id: int, macro_block_id: int, segment_id: int
+    db: Session, novel_id: int, block_index: int, segment_id: int
 ) -> Optional[int]:
-    """Previous segment in the same novel by (macro_block_id, id) order."""
+    """Previous segment in the same novel by (chapter block_index, id) order."""
     row = (
         db.query(NovelSegment.id)
+        .join(NovelChapter, NovelSegment.chapter_id == NovelChapter.id)
         .filter(
             NovelSegment.novel_id == novel_id,
-            (NovelSegment.macro_block_id < macro_block_id)
+            (NovelChapter.block_index < block_index)
             | (
-                (NovelSegment.macro_block_id == macro_block_id)
+                (NovelChapter.block_index == block_index)
                 & (NovelSegment.id < segment_id)
             ),
         )
-        .order_by(desc(NovelSegment.macro_block_id), desc(NovelSegment.id))
+        .order_by(desc(NovelChapter.block_index), desc(NovelSegment.id))
         .limit(1)
         .first()
     )
@@ -106,20 +124,21 @@ def query_prev_segment_id(
 
 
 def query_next_segment_id(
-    db: Session, novel_id: int, macro_block_id: int, segment_id: int
+    db: Session, novel_id: int, block_index: int, segment_id: int
 ) -> Optional[int]:
-    """Next segment in the same novel by (macro_block_id, id) order."""
+    """Next segment in the same novel by (chapter block_index, id) order."""
     row = (
         db.query(NovelSegment.id)
+        .join(NovelChapter, NovelSegment.chapter_id == NovelChapter.id)
         .filter(
             NovelSegment.novel_id == novel_id,
-            (NovelSegment.macro_block_id > macro_block_id)
+            (NovelChapter.block_index > block_index)
             | (
-                (NovelSegment.macro_block_id == macro_block_id)
+                (NovelChapter.block_index == block_index)
                 & (NovelSegment.id > segment_id)
             ),
         )
-        .order_by(NovelSegment.macro_block_id, NovelSegment.id)
+        .order_by(NovelChapter.block_index, NovelSegment.id)
         .limit(1)
         .first()
     )
@@ -249,6 +268,27 @@ def get_or_create_mood(db: Session, novel_id: int, mood_name: str) -> NovelMood:
         db.add(mood)
         db.flush()
     return mood
+
+
+def get_or_create_chapter(
+    db: Session, novel_id: int, block_index: int, title: str
+) -> NovelChapter:
+    """Resolve chapter by (novel, block index), creating if needed. Updates title on match."""
+    chapter = (
+        db.query(NovelChapter)
+        .filter(
+            NovelChapter.novel_id == novel_id,
+            NovelChapter.block_index == block_index,
+        )
+        .first()
+    )
+    if chapter is None:
+        chapter = NovelChapter(novel_id=novel_id, block_index=block_index, title=title)
+        db.add(chapter)
+        db.flush()
+    else:
+        chapter.title = title
+    return chapter
 
 
 def get_or_create_theme(db: Session, novel_id: int, theme_name: str) -> NovelTheme:

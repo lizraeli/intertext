@@ -3,8 +3,22 @@ import re
 from pydantic import BaseModel
 from typing import Optional
 
-from models import NovelSegment, SegmentTheme
+from models import NovelChapter, NovelSegment, SegmentTheme
 from queries import RandomSegmentsRow, SimilarRow
+
+
+class ChapterResponse(BaseModel):
+    @staticmethod
+    def from_row(chapter: NovelChapter) -> "ChapterResponse":
+        return ChapterResponse(
+            id=chapter.id,
+            title=chapter.title,
+            block_index=chapter.block_index,
+        )
+
+    id: int
+    title: str
+    block_index: int
 
 
 class SegmentThemeResponse(BaseModel):
@@ -33,6 +47,8 @@ class SegmentResponse(BaseModel):
             characters=[character.name for character in row.characters],
             place=row.place.name,
             mood=row.mood.name,
+            chapter_id=row.chapter.id,
+            chapter_title=row.chapter.title,
         )
 
     id: int
@@ -41,6 +57,8 @@ class SegmentResponse(BaseModel):
     characters: list[str]
     place: str
     mood: str
+    chapter_id: int
+    chapter_title: str
 
     class Config:
         from_attributes = True
@@ -159,6 +177,8 @@ class FullSegmentResponse(BaseModel):
             themes=[SegmentThemeResponse.from_row(theme) for theme in row.themes],
             place=row.place.name,
             characters=[character.name for character in row.characters],
+            chapter_id=row.chapter.id,
+            chapter_title=row.chapter.title,
             prev_segment_id=prev_segment_id,
             next_segment_id=next_segment_id,
         )
@@ -173,5 +193,7 @@ class FullSegmentResponse(BaseModel):
     themes: list[SegmentThemeResponse]
     characters: list[str]
     place: str
+    chapter_id: int
+    chapter_title: str
     prev_segment_id: Optional[int] = None
     next_segment_id: Optional[int] = None

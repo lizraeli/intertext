@@ -39,6 +39,9 @@ class Novel(Base):
     themes = relationship(
         "NovelTheme", back_populates="novel", cascade="all, delete-orphan"
     )
+    chapters = relationship(
+        "NovelChapter", back_populates="novel", cascade="all, delete-orphan"
+    )
 
 
 segment_characters = Table(
@@ -106,6 +109,28 @@ class NovelMood(Base):
     )
 
 
+class NovelChapter(Base):
+    __tablename__ = "novel_chapters"
+    __table_args__ = (
+        UniqueConstraint("novel_id", "block_index", name="uq_novel_chapter_block"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    novel_id = Column(
+        Integer,
+        ForeignKey("novels.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    block_index = Column(Integer, nullable=False)
+    title = Column(String(512), nullable=False)
+
+    novel: Mapped[Novel] = relationship("Novel", back_populates="chapters")
+    segments: Mapped[list["NovelSegment"]] = relationship(
+        "NovelSegment", back_populates="chapter"
+    )
+
+
 class NovelTheme(Base):
     __tablename__ = "novel_themes"
     __table_args__ = (UniqueConstraint("novel_id", "name", name="uq_novel_theme_name"),)
@@ -162,8 +187,13 @@ class NovelSegment(Base):
         nullable=False,
         index=True,
     )
+    chapter_id: Mapped[int] = Column(
+        Integer,
+        ForeignKey("novel_chapters.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
 
-    macro_block_id = Column(Integer, nullable=False)
     start_index = Column(Integer, nullable=False)
     end_index = Column(Integer, nullable=False)
     content = Column(Text, nullable=False)
@@ -179,6 +209,9 @@ class NovelSegment(Base):
     )
     place: Mapped["NovelPlace"] = relationship("NovelPlace", back_populates="segments")
     mood: Mapped["NovelMood"] = relationship("NovelMood", back_populates="segments")
+    chapter: Mapped["NovelChapter"] = relationship(
+        "NovelChapter", back_populates="segments"
+    )
     themes: Mapped[list["SegmentTheme"]] = relationship(
         "SegmentTheme",
         back_populates="segment",

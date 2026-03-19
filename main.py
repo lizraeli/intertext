@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from database import get_db
 from schemas import (
+    ChapterResponse,
     SegmentResponse,
     TraversalRequest,
     TraversalResponse,
@@ -13,6 +14,8 @@ from schemas import (
     FullSegmentResponse,
 )
 from queries import (
+    query_chapters_for_novel,
+    query_novel_by_id,
     query_novel_segments,
     query_similar_by_vector,
     query_random_segments,
@@ -32,6 +35,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.get("/api/novels/{novel_id}/chapters", response_model=List[ChapterResponse])
+def get_novel_chapters(novel_id: int, db: Session = Depends(get_db)):
+    if query_novel_by_id(db=db, novel_id=novel_id) is None:
+        raise HTTPException(status_code=404, detail="Novel not found")
+
+    chapters = query_chapters_for_novel(db=db, novel_id=novel_id)
+    return [ChapterResponse.from_row(chapter) for chapter in chapters]
 
 
 @app.get("/api/novels/{novel_id}/segments", response_model=List[SegmentResponse])
@@ -76,8 +88,8 @@ def get_segment(segment_id: int, db: Session = Depends(get_db)):
     if not row:
         raise HTTPException(status_code=404, detail="Segment not found")
 
-    prev_id = query_prev_segment_id(db, row.novel_id, row.macro_block_id, row.id)
-    next_id = query_next_segment_id(db, row.novel_id, row.macro_block_id, row.id)
+    prev_id = query_prev_segment_id(db, row.novel_id, row.chapter.block_index, row.id)
+    next_id = query_next_segment_id(db, row.novel_id, row.chapter.block_index, row.id)
     return FullSegmentResponse.from_row(
         row, prev_segment_id=prev_id, next_segment_id=next_id
     )

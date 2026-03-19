@@ -4,10 +4,11 @@ from chonkie.embeddings import OpenAIEmbeddings
 from sqlalchemy import func
 
 from database import SessionLocal
-from models import Novel, NovelSegment
+from models import Novel, NovelChapter, NovelSegment
 from queries import (
     get_novel_character_names,
     get_or_create_characters,
+    get_or_create_chapter,
     get_or_create_mood,
     get_or_create_place,
     sync_segment_themes,
@@ -34,23 +35,31 @@ def ingest_book_to_db(book: BookData):
 
         if novel_record:
             max_block = (
-                db.query(func.max(NovelSegment.macro_block_id))
-                .filter(NovelSegment.novel_id == novel_record.id)
+                db.query(func.max(NovelChapter.block_index))
+                .filter(NovelChapter.novel_id == novel_record.id)
                 .scalar()
             )
 
             if max_block is not None:
-                # Delete segments from the last block (may be incomplete)
-                db.query(NovelSegment).filter(
-                    NovelSegment.novel_id == novel_record.id,
-                    NovelSegment.macro_block_id == max_block,
-                ).delete()
+                last_chapter = (
+                    db.query(NovelChapter)
+                    .filter(
+                        NovelChapter.novel_id == novel_record.id,
+                        NovelChapter.block_index == max_block,
+                    )
+                    .first()
+                )
+                if last_chapter is not None:
+                    # Delete segments from the last chapter (may be incomplete)
+                    db.query(NovelSegment).filter(
+                        NovelSegment.chapter_id == last_chapter.id
+                    ).delete(synchronize_session=False)
                 db.commit()
                 resume_from_block = max_block
                 print(f"Resuming from block {resume_from_block} (0-indexed)...")
             else:
                 print(
-                    f"Novel '{book.title}' exists but has no segments. Starting fresh..."
+                    f"Novel '{book.title}' exists but has no chapters yet. Starting fresh..."
                 )
         else:
             novel_record = Novel(
@@ -78,6 +87,13 @@ def ingest_book_to_db(book: BookData):
 
             print(
                 f"  -> Processing Chapter {chapter_data.chapter}/{len(chapter_blocks)}..."
+            )
+
+            chapter_row = get_or_create_chapter(
+                db=db,
+                novel_id=novel_record.id,
+                block_index=block_index,
+                title=chapter_data.chapter,
             )
 
             chunks = recursive_chunker.chunk(chapter_data.text)
@@ -115,7 +131,7 @@ def ingest_book_to_db(book: BookData):
 
                 segment = NovelSegment(
                     novel_id=novel_record.id,
-                    macro_block_id=block_index,
+                    chapter_id=chapter_row.id,
                     start_index=chunk.start_index,
                     end_index=chunk.end_index,
                     content=chunk.text.strip(),
