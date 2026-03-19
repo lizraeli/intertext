@@ -1,5 +1,6 @@
 from sqlalchemy import (
     Column,
+    Float,
     Integer,
     String,
     Text,
@@ -34,6 +35,9 @@ class Novel(Base):
     )
     moods = relationship(
         "NovelMood", back_populates="novel", cascade="all, delete-orphan"
+    )
+    themes = relationship(
+        "NovelTheme", back_populates="novel", cascade="all, delete-orphan"
     )
 
 
@@ -102,6 +106,45 @@ class NovelMood(Base):
     )
 
 
+class NovelTheme(Base):
+    __tablename__ = "novel_themes"
+    __table_args__ = (UniqueConstraint("novel_id", "name", name="uq_novel_theme_name"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    novel_id = Column(Integer, ForeignKey("novels.id"), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+
+    novel: Mapped[Novel] = relationship("Novel", back_populates="themes")
+    segments: Mapped[list["SegmentTheme"]] = relationship(
+        "SegmentTheme", back_populates="theme"
+    )
+
+
+class SegmentTheme(Base):
+    """Association between a segment and a novel theme"""
+
+    __tablename__ = "segment_themes"
+
+    segment_id = Column(
+        Integer,
+        ForeignKey("novel_segments.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    theme_id = Column(
+        Integer,
+        ForeignKey("novel_themes.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    intensity = Column(Float, nullable=False)
+    tone = Column(Float, nullable=False)
+    manifestation = Column(Text, nullable=False)
+
+    segment: Mapped["NovelSegment"] = relationship(
+        "NovelSegment", back_populates="themes"
+    )
+    theme: Mapped["NovelTheme"] = relationship("NovelTheme", back_populates="segments")
+
+
 class NovelSegment(Base):
     __tablename__ = "novel_segments"
 
@@ -136,3 +179,8 @@ class NovelSegment(Base):
     )
     place: Mapped["NovelPlace"] = relationship("NovelPlace", back_populates="segments")
     mood: Mapped["NovelMood"] = relationship("NovelMood", back_populates="segments")
+    themes: Mapped[list["SegmentTheme"]] = relationship(
+        "SegmentTheme",
+        back_populates="segment",
+        cascade="all, delete-orphan",
+    )

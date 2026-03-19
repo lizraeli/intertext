@@ -40,14 +40,7 @@ def get_novel_segments(novel_id: int, db: Session = Depends(get_db)):
     if not segments:
         raise HTTPException(status_code=404, detail="Novel not found")
 
-    return [
-        SegmentResponse(
-            id=seg.id,
-            content=seg.content,
-            themes=seg.metadata_col.get("primary_themes", []),
-        )
-        for seg in segments
-    ]
+    return [SegmentResponse.from_row(segment) for segment in segments]
 
 
 @app.post("/api/segments/similar", response_model=List[TraversalResponse])
@@ -85,7 +78,9 @@ def get_segment(segment_id: int, db: Session = Depends(get_db)):
 
     prev_id = query_prev_segment_id(db, row.novel_id, row.macro_block_id, row.id)
     next_id = query_next_segment_id(db, row.novel_id, row.macro_block_id, row.id)
-    return FullSegmentResponse.from_row(row, prev_segment_id=prev_id, next_segment_id=next_id)
+    return FullSegmentResponse.from_row(
+        row, prev_segment_id=prev_id, next_segment_id=next_id
+    )
 
 
 @app.get(

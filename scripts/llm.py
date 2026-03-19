@@ -1,7 +1,7 @@
 from openai import OpenAI
 
-from schemas import ChunkMetadata
 from scripts.utils import BookData
+from llm_schemas import ChunkMetadata
 
 # Initialize OpenAI Client (automatically picks up OPENAI_API_KEY from the environment)
 client = OpenAI()

@@ -4,12 +4,27 @@ from sqlalchemy.orm import Session, selectinload
 from sqlalchemy.sql.expression import func
 from sqlalchemy import desc
 
-from models import Novel, NovelCharacter, NovelMood, NovelPlace, NovelSegment
+from models import (
+    Novel,
+    NovelCharacter,
+    NovelMood,
+    NovelPlace,
+    NovelSegment,
+    NovelTheme,
+    SegmentTheme,
+)
+from llm_schemas import ThemeAnnotation
 
 
 def query_novel_segments(db: Session, novel_id: int):
     return (
         db.query(NovelSegment)
+        .options(
+            selectinload(NovelSegment.characters),
+            selectinload(NovelSegment.place),
+            selectinload(NovelSegment.mood),
+            selectinload(NovelSegment.themes).selectinload(SegmentTheme.theme),
+        )
         .filter(NovelSegment.novel_id == novel_id)
         .order_by(NovelSegment.macro_block_id, NovelSegment.id)
         .all()
@@ -60,6 +75,7 @@ def query_segment_by_id(db: Session, segment_id: int) -> NovelSegment | None:
             selectinload(NovelSegment.characters),
             selectinload(NovelSegment.place),
             selectinload(NovelSegment.mood),
+            selectinload(NovelSegment.themes).selectinload(SegmentTheme.theme),
             selectinload(NovelSegment.novel),
         )
         .join(Novel, NovelSegment.novel_id == Novel.id)
@@ -233,6 +249,50 @@ def get_or_create_mood(db: Session, novel_id: int, mood_name: str) -> NovelMood:
         db.add(mood)
         db.flush()
     return mood
+
+
+def get_or_create_theme(db: Session, novel_id: int, theme_name: str) -> NovelTheme:
+    """Resolve theme label to NovelTheme, creating if needed."""
+    name = theme_name.strip()
+    if not name:
+        name = "unknown"
+
+    theme = (
+        db.query(NovelTheme)
+        .filter(NovelTheme.novel_id == novel_id, NovelTheme.name == name)
+        .first()
+    )
+    if theme is None:
+        theme = NovelTheme(novel_id=novel_id, name=name)
+        db.add(theme)
+        db.flush()
+    return theme
+
+
+def sync_segment_themes(
+    db: Session,
+    segment: NovelSegment,
+    theme_annotations: list[ThemeAnnotation],
+) -> None:
+    """Replace segment_themes rows for this segment from LLM annotations."""
+    db.query(SegmentTheme).filter(SegmentTheme.segment_id == segment.id).delete(
+        synchronize_session=False
+    )
+
+    for annotation in theme_annotations:
+        theme = get_or_create_theme(
+            db=db, novel_id=segment.novel_id, theme_name=annotation.name
+        )
+        db.add(
+            SegmentTheme(
+                segment_id=segment.id,
+                theme_id=theme.id,
+                intensity=annotation.intensity,
+                tone=annotation.tone,
+                manifestation=annotation.manifestation,
+            )
+        )
+    db.flush()
 
 
 def get_novel_character_names(db: Session, novel_id: int) -> list[str]:

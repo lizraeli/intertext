@@ -9,7 +9,15 @@ from fastapi.testclient import TestClient
 
 from database import Base, get_db
 from main import app
-from models import Novel, NovelCharacter, NovelMood, NovelPlace, NovelSegment
+from models import (
+    Novel,
+    NovelCharacter,
+    NovelMood,
+    NovelPlace,
+    NovelSegment,
+    NovelTheme,
+    SegmentTheme,
+)
 
 
 class SeedData(TypedDict):
@@ -182,6 +190,39 @@ def seed_data(db_session: Session) -> SeedData:
     seg_a.characters = [char_alice]
     seg_b.characters = [char_bob]
     seg_c.characters = [char_clara]
+    db_session.flush()
+
+    theme_isolation_n1 = NovelTheme(novel_id=novel_1.id, name="isolation")
+    theme_hope_n1 = NovelTheme(novel_id=novel_1.id, name="hope")
+    theme_isolation_n2 = NovelTheme(novel_id=novel_2.id, name="isolation")
+    db_session.add_all([theme_isolation_n1, theme_hope_n1, theme_isolation_n2])
+    db_session.flush()
+
+    db_session.add_all(
+        [
+            SegmentTheme(
+                segment_id=seg_a.id,
+                theme_id=theme_isolation_n1.id,
+                intensity=0.8,
+                tone=-0.5,
+                manifestation="The character sits alone in an empty room.",
+            ),
+            SegmentTheme(
+                segment_id=seg_b.id,
+                theme_id=theme_hope_n1.id,
+                intensity=0.9,
+                tone=0.7,
+                manifestation="Light breaks through the window at dawn.",
+            ),
+            SegmentTheme(
+                segment_id=seg_c.id,
+                theme_id=theme_isolation_n2.id,
+                intensity=0.6,
+                tone=-0.3,
+                manifestation="The streets are empty and silent.",
+            ),
+        ]
+    )
     db_session.flush()
 
     return {

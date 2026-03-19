@@ -10,6 +10,7 @@ from queries import (
     get_or_create_characters,
     get_or_create_mood,
     get_or_create_place,
+    sync_segment_themes,
 )
 from scripts.chunkers import recursive_chunker
 from scripts.llm import extract_chunk_metadata
@@ -126,7 +127,14 @@ def ingest_book_to_db(book: BookData):
                 )
                 db.add(segment)
                 db.flush()
+
                 segment.characters = characters
+
+                sync_segment_themes(
+                    db=db,
+                    segment=segment,
+                    theme_annotations=chunk_metadata.primary_themes,
+                )
                 total_segments_processed += 1
 
                 db.commit()

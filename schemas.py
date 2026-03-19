@@ -1,48 +1,46 @@
 import re
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import Optional
 
-from models import NovelSegment
+from models import NovelSegment, SegmentTheme
 from queries import RandomSegmentsRow, SimilarRow
 
 
-# --- Ingestion Schemas (For OpenAI) ---
-class ThemeAnnotation(BaseModel):
-    name: str = Field(
-        description="The theme name (e.g., 'isolation', 'revenge', 'class struggle')."
-    )
-    intensity: float = Field(
-        description="Score from 0.0 to 1.0: 0.1 means faintly present in the background, 1.0 means the overwhelming central concern of the passage."
-    )
-    tone: float = Field(
-        description="Score from -1.0 to 1.0: -1.0 is the darkest or most painful expression of the theme, 0.0 is neutral or ambivalent, 1.0 is the most hopeful or transcendent expression."
-    )
-    manifestation: str = Field(
-        description="Write a single sentence describing how this theme concretely manifests in this specific passage. This sentence must be specific enough that a reader who has not seen the passage can form a vivid visual or emotional impression from it alone. Do NOT write a sentence that could apply to any passage with this theme — do not restate the keyword or write a general observation. Describe what the author actually does: the specific image, action, voice, or detail through which the theme appears."
-    )
+class SegmentThemeResponse(BaseModel):
+    @staticmethod
+    def from_row(row: SegmentTheme) -> "SegmentThemeResponse":
+        return SegmentThemeResponse(
+            name=row.theme.name,
+            intensity=row.intensity,
+            tone=row.tone,
+            manifestation=row.manifestation,
+        )
+
+    name: str
+    intensity: float
+    tone: float
+    manifestation: str
 
 
-class ChunkMetadata(BaseModel):
-    primary_themes: list[ThemeAnnotation] = Field(
-        description="The top 2 to 3 overarching literary themes in this passage."
-    )
-    characters: list[str] = Field(
-        description="Names of characters actively participating or mentioned."
-    )
-    place: str = Field(
-        description="The physical place where this passage occurs. Return 'unknown' if not stated."
-    )
-    mood: str = Field(
-        description="A single word describing the emotional tone (e.g., 'melancholic', 'tense')."
-    )
-
-
-# --- API Endpoints Schemas ---
 class SegmentResponse(BaseModel):
+    @staticmethod
+    def from_row(row: NovelSegment) -> "SegmentResponse":
+        return SegmentResponse(
+            id=row.id,
+            content=row.content,
+            themes=[SegmentThemeResponse.from_row(theme) for theme in row.themes],
+            characters=[character.name for character in row.characters],
+            place=row.place.name,
+            mood=row.mood.name,
+        )
+
     id: int
     content: str
-    themes: list[ThemeAnnotation]
+    themes: list[SegmentThemeResponse]
+    characters: list[str]
+    place: str
+    mood: str
 
     class Config:
         from_attributes = True
@@ -148,7 +146,6 @@ class FullSegmentResponse(BaseModel):
         prev_segment_id: Optional[int] = None,
         next_segment_id: Optional[int] = None,
     ) -> "FullSegmentResponse":
-        metadata = row.metadata_col
         novel = row.novel
 
         return FullSegmentResponse(
@@ -159,7 +156,7 @@ class FullSegmentResponse(BaseModel):
             author=novel.author,
             year=novel.publication_year,
             mood=row.mood.name,
-            themes=metadata.get("primary_themes", []),
+            themes=[SegmentThemeResponse.from_row(theme) for theme in row.themes],
             place=row.place.name,
             characters=[character.name for character in row.characters],
             prev_segment_id=prev_segment_id,
@@ -173,7 +170,7 @@ class FullSegmentResponse(BaseModel):
     author: str
     year: Optional[int]
     mood: str
-    themes: list[ThemeAnnotation]
+    themes: list[SegmentThemeResponse]
     characters: list[str]
     place: str
     prev_segment_id: Optional[int] = None
