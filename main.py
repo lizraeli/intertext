@@ -23,6 +23,8 @@ from queries import (
     query_prev_segment_id,
     query_next_segment_id,
     query_similar_by_segment,
+    query_segment_position_in_chapter,
+    query_chapter_segment_count,
 )
 from typing import List
 
@@ -90,8 +92,14 @@ def get_segment(segment_id: int, db: Session = Depends(get_db)):
 
     prev_id = query_prev_segment_id(db, row.novel_id, row.chapter.block_index, row.id)
     next_id = query_next_segment_id(db, row.novel_id, row.chapter.block_index, row.id)
+    segment_index = query_segment_position_in_chapter(db, row.chapter_id, row.id)
+    chapter_segment_count = query_chapter_segment_count(db, row.chapter_id)
     return FullSegmentResponse.from_row(
-        row, prev_segment_id=prev_id, next_segment_id=next_id
+        row,
+        segment_index=segment_index,
+        chapter_segment_count=chapter_segment_count,
+        prev_segment_id=prev_id,
+        next_segment_id=next_id,
     )
 
 

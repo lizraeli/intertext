@@ -28,6 +28,13 @@ class SeedData(TypedDict):
     seg_b: NovelSegment
     seg_c: NovelSegment
 
+
+class MultiSegmentChapterData(TypedDict):
+    novel: Novel
+    seg_1: NovelSegment
+    seg_2: NovelSegment
+    seg_3: NovelSegment
+
 load_dotenv()
 
 DATABASE_TEST_URL = os.getenv("DATABASE_TEST_URL")
@@ -245,3 +252,39 @@ def seed_data(db_session: Session) -> SeedData:
         "seg_b": seg_b,
         "seg_c": seg_c,
     }
+
+
+@pytest.fixture
+def multi_segment_chapter(db_session: Session) -> MultiSegmentChapterData:
+    novel = Novel(title="Position Novel", author="Position Author", publication_year=2020)
+    db_session.add(novel)
+    db_session.flush()
+
+    place = NovelPlace(novel_id=novel.id, name="somewhere")
+    mood = NovelMood(novel_id=novel.id, name="neutral")
+    chapter = NovelChapter(novel_id=novel.id, block_index=0, title="Chapter 1")
+    db_session.add_all([place, mood, chapter])
+    db_session.flush()
+
+    seg_1 = NovelSegment(
+        novel_id=novel.id, chapter_id=chapter.id,
+        start_index=0, end_index=50, content="First segment.", token_count=5,
+        metadata_col={"mood": "neutral"}, place_id=place.id, mood_id=mood.id,
+        embedding=_make_embedding(0),
+    )
+    seg_2 = NovelSegment(
+        novel_id=novel.id, chapter_id=chapter.id,
+        start_index=51, end_index=100, content="Second segment.", token_count=5,
+        metadata_col={"mood": "neutral"}, place_id=place.id, mood_id=mood.id,
+        embedding=_make_embedding(0),
+    )
+    seg_3 = NovelSegment(
+        novel_id=novel.id, chapter_id=chapter.id,
+        start_index=101, end_index=150, content="Third segment.", token_count=5,
+        metadata_col={"mood": "neutral"}, place_id=place.id, mood_id=mood.id,
+        embedding=_make_embedding(0),
+    )
+    db_session.add_all([seg_1, seg_2, seg_3])
+    db_session.flush()
+
+    return {"novel": novel, "seg_1": seg_1, "seg_2": seg_2, "seg_3": seg_3}

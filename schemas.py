@@ -161,6 +161,8 @@ class FullSegmentResponse(BaseModel):
     @staticmethod
     def from_row(
         row: NovelSegment,
+        segment_index: int,
+        chapter_segment_count: int,
         prev_segment_id: Optional[int] = None,
         next_segment_id: Optional[int] = None,
     ) -> "FullSegmentResponse":
@@ -181,6 +183,8 @@ class FullSegmentResponse(BaseModel):
             chapter_title=row.chapter.title,
             prev_segment_id=prev_segment_id,
             next_segment_id=next_segment_id,
+            segment_index=segment_index,
+            chapter_segment_count=chapter_segment_count,
         )
 
     id: int
@@ -197,3 +201,5 @@ class FullSegmentResponse(BaseModel):
     chapter_title: str
     prev_segment_id: Optional[int] = None
     next_segment_id: Optional[int] = None
+    segment_index: int = 1
+    chapter_segment_count: int = 1

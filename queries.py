@@ -157,7 +157,7 @@ def query_prev_segment_id(
 def query_next_segment_id(
     db: Session, novel_id: int, block_index: int, segment_id: int
 ) -> Optional[int]:
-    """Next segment in the same novel by (chapter block_index, id) order."""
+    """Next segment in the same novel"""
     row = (
         db.query(NovelSegment.id)
         .join(NovelChapter, NovelSegment.chapter_id == NovelChapter.id)
@@ -174,6 +174,30 @@ def query_next_segment_id(
         .first()
     )
     return row.id if row else None
+
+
+def query_segment_position_in_chapter(
+    db: Session, chapter_id: int, segment_id: int
+) -> int:
+    """Position of this segment within its chapter"""
+    count = (
+        db.query(func.count(NovelSegment.id))
+        .filter(
+            NovelSegment.chapter_id == chapter_id,
+            NovelSegment.id < segment_id,
+        )
+        .scalar()
+    )
+    return count + 1
+
+
+def query_chapter_segment_count(db: Session, chapter_id: int) -> int:
+    """Total number of segments in a chapter."""
+    return (
+        db.query(func.count(NovelSegment.id))
+        .filter(NovelSegment.chapter_id == chapter_id)
+        .scalar()
+    )
 
 
 def query_segment_embedding(db: Session, segment_id: int):

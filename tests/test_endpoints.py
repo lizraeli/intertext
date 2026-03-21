@@ -1,5 +1,5 @@
 from fastapi.testclient import TestClient
-from tests.conftest import SeedData
+from tests.conftest import MultiSegmentChapterData, SeedData
 
 
 class TestNovelChapters:
@@ -99,6 +99,8 @@ class TestGetSegment:
             "characters": ["Alice"],
             "chapter_id": seg_a.chapter_id,
             "chapter_title": "Chapter 1",
+            "segment_index": 1,
+            "chapter_segment_count": 1,
             "prev_segment_id": None,
             "next_segment_id": seg_b_id,
         }
@@ -124,6 +126,15 @@ class TestGetSegment:
         r_c = client.get(f"/api/segments/{seg_c_id}").json()
         assert r_c["prev_segment_id"] is None
         assert r_c["next_segment_id"] is None
+
+    def test_segment_position_in_chapter(
+        self, client: TestClient, multi_segment_chapter: MultiSegmentChapterData
+    ) -> None:
+        for expected_index, key in enumerate(["seg_1", "seg_2", "seg_3"], start=1):
+            seg_id = multi_segment_chapter[key].id
+            data = client.get(f"/api/segments/{seg_id}").json()
+            assert data["segment_index"] == expected_index
+            assert data["chapter_segment_count"] == 3
 
     def test_not_found(self, client: TestClient, seed_data: SeedData) -> None:
         response = client.get("/api/segments/999999")
