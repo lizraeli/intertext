@@ -1,7 +1,7 @@
 import re
 
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, cast
 
 from models import Novel, NovelChapter, NovelSegment, SegmentTheme
 from queries import RandomSegmentsRow, SimilarRow
@@ -35,6 +35,50 @@ class ChapterResponse(BaseModel):
     id: int
     title: str
     block_index: int
+
+
+class ChapterDetailResponse(BaseModel):
+    @staticmethod
+    def from_row(chapter: NovelChapter) -> "ChapterDetailResponse":
+        segments = chapter.segments
+        first_segment = cast(
+            NovelSegment,
+            min(segments, key=lambda s: s.start_index) if segments else None,
+        )
+
+        characters: list[str] = sorted(
+            {c.name for seg in segments for c in seg.characters}
+        )
+        places: list[str] = sorted(
+            {seg.place.name for seg in segments if seg.place.name != "unknown"}
+        )
+
+        return ChapterDetailResponse(
+            id=chapter.id,
+            title=chapter.title,
+            block_index=chapter.block_index,
+            opening_line=(
+                extract_opening_line(first_segment.content) if first_segment else ""
+            ),
+            first_segment_id=first_segment.id if first_segment else None,
+            characters=characters,
+            places=places,
+        )
+
+    id: int
+    title: str
+    block_index: int
+    opening_line: str
+    first_segment_id: Optional[int]
+    characters: list[str]
+    places: list[str]
+
+
+class NovelChaptersResponse(BaseModel):
+    novel_title: str
+    author: str
+    publication_year: Optional[int]
+    chapters: list[ChapterDetailResponse]
 
 
 class SegmentThemeResponse(BaseModel):

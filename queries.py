@@ -65,6 +65,20 @@ def query_chapters_for_novel(db: Session, novel_id: int) -> list[NovelChapter]:
     )
 
 
+def query_chapters_with_segments(db: Session, novel_id: int) -> list[NovelChapter]:
+    """Load chapters with segments eagerly loaded (including each segment's characters and place)."""
+    return (
+        db.query(NovelChapter)
+        .options(
+            selectinload(NovelChapter.segments).selectinload(NovelSegment.characters),
+            selectinload(NovelChapter.segments).selectinload(NovelSegment.place),
+        )
+        .filter(NovelChapter.novel_id == novel_id)
+        .order_by(NovelChapter.block_index)
+        .all()
+    )
+
+
 def query_novel_segments(db: Session, novel_id: int):
     return (
         db.query(NovelSegment)

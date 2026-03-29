@@ -6,7 +6,8 @@ from sqlalchemy.orm import Session
 from database import get_db
 from schemas import (
     NovelResponse,
-    ChapterResponse,
+    ChapterDetailResponse,
+    NovelChaptersResponse,
     SegmentResponse,
     TraversalRequest,
     TraversalResponse,
@@ -16,7 +17,7 @@ from schemas import (
 )
 from queries import (
     query_all_novels,
-    query_chapters_for_novel,
+    query_chapters_with_segments,
     query_novel_by_id,
     query_novel_segments,
     query_similar_by_vector,
@@ -47,13 +48,19 @@ def list_novels(db: Session = Depends(get_db)):
     return [NovelResponse.from_row(novel) for novel in novels]
 
 
-@app.get("/api/novels/{novel_id}/chapters", response_model=List[ChapterResponse])
+@app.get("/api/novels/{novel_id}/chapters", response_model=NovelChaptersResponse)
 def get_novel_chapters(novel_id: int, db: Session = Depends(get_db)):
-    if query_novel_by_id(db=db, novel_id=novel_id) is None:
+    novel = query_novel_by_id(db=db, novel_id=novel_id)
+    if novel is None:
         raise HTTPException(status_code=404, detail="Novel not found")
 
-    chapters = query_chapters_for_novel(db=db, novel_id=novel_id)
-    return [ChapterResponse.from_row(chapter) for chapter in chapters]
+    chapters = query_chapters_with_segments(db=db, novel_id=novel_id)
+    return NovelChaptersResponse(
+        novel_title=novel.title,
+        author=novel.author,
+        publication_year=novel.publication_year,
+        chapters=[ChapterDetailResponse.from_row(ch) for ch in chapters],
+    )
 
 
 @app.get("/api/novels/{novel_id}/segments", response_model=List[SegmentResponse])
