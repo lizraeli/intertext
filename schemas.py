@@ -171,7 +171,7 @@ _ABBREVIATIONS = frozenset(
 
 def extract_opening_line(content: str, max_chars: int = 200) -> str:
     """Extract the first sentence from segment content, respecting abbreviations."""
-    text = content[: max_chars * 2].replace("\n", " ").strip()
+    text = content[: max_chars * 4].replace("\n", " ").strip()
     for match in re.finditer(r"[.!?][\"'\u2019\u201d]*\s", text):
         end = match.end()
         before_punct = text[: match.start()].split()
@@ -180,7 +180,11 @@ def extract_opening_line(content: str, max_chars: int = 200) -> str:
         line = text[:end].strip()
         if len(line) >= 20:
             return line
-    return text[:max_chars].strip()
+    truncated = text[:max_chars]
+    last_space = truncated.rfind(" ")
+    if last_space > 0:
+        return truncated[:last_space].strip() + "\u2026"
+    return truncated.strip() + "\u2026"
 
 
 class SegmentPreview(BaseModel):
