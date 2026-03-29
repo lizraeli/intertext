@@ -2,6 +2,30 @@ from fastapi.testclient import TestClient
 from tests.conftest import MultiSegmentChapterData, SeedData
 
 
+class TestListNovels:
+    def test_returns_all_novels(self, client: TestClient, seed_data: SeedData) -> None:
+        response = client.get("/api/novels")
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 2
+
+    def test_ordered_by_title(self, client: TestClient, seed_data: SeedData) -> None:
+        data = client.get("/api/novels").json()
+        assert data[0]["title"] == "Other Novel"
+        assert data[1]["title"] == "Test Novel"
+
+    def test_response_shape(self, client: TestClient, seed_data: SeedData) -> None:
+        data = client.get("/api/novels").json()
+        novel = data[0]
+        assert set(novel.keys()) == {"id", "title", "author", "publication_year"}
+        assert novel == {
+            "id": seed_data["novel_2"].id,
+            "title": "Other Novel",
+            "author": "Other Author",
+            "publication_year": 2010,
+        }
+
+
 class TestNovelChapters:
     def test_returns_chapters_ordered(
         self, client: TestClient, seed_data: SeedData
@@ -11,16 +35,26 @@ class TestNovelChapters:
         seg_b = seed_data["seg_b"]
         response = client.get(f"/api/novels/{novel_id}/chapters")
         assert response.status_code == 200
-        assert response.json() == [
+        data = response.json()
+        assert data["novel_title"] == "Test Novel"
+        assert data["author"] == "Test Author"
+        assert data["publication_year"] == 2000
+        assert data["chapters"] == [
             {
                 "id": seg_a.chapter_id,
                 "title": "Chapter 1",
                 "block_index": 0,
+                "opening_line": "The room was empty and the silence pressed in from every side.",
+                "first_segment_id": seg_a.id,
+                "places": ["a dark room"],
             },
             {
                 "id": seg_b.chapter_id,
                 "title": "Chapter 2",
                 "block_index": 1,
+                "opening_line": "Light broke through the clouds at dawn.",
+                "first_segment_id": seg_b.id,
+                "places": ["a hilltop"],
             },
         ]
 
@@ -31,11 +65,16 @@ class TestNovelChapters:
         seg_c = seed_data["seg_c"]
         response = client.get(f"/api/novels/{novel_id}/chapters")
         assert response.status_code == 200
-        assert response.json() == [
+        data = response.json()
+        assert data["novel_title"] == "Other Novel"
+        assert data["chapters"] == [
             {
                 "id": seg_c.chapter_id,
                 "title": "Chapter 1",
                 "block_index": 0,
+                "opening_line": "The streets were empty and silent.",
+                "first_segment_id": seg_c.id,
+                "places": ["an abandoned city"],
             },
         ]
 

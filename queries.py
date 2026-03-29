@@ -17,6 +17,10 @@ from models import (
 from llm_schemas import ThemeAnnotation
 
 
+def query_all_novels(db: Session) -> list[Novel]:
+    return db.query(Novel).order_by(Novel.title).all()
+
+
 def query_novel_by_id(db: Session, novel_id: int) -> Novel | None:
     return db.query(Novel).filter(Novel.id == novel_id).first()
 
@@ -55,6 +59,19 @@ def delete_segments_for_chapter(db: Session, chapter_id: int) -> None:
 def query_chapters_for_novel(db: Session, novel_id: int) -> list[NovelChapter]:
     return (
         db.query(NovelChapter)
+        .filter(NovelChapter.novel_id == novel_id)
+        .order_by(NovelChapter.block_index)
+        .all()
+    )
+
+
+def query_chapters_with_segments(db: Session, novel_id: int) -> list[NovelChapter]:
+    """Load chapters with segments eagerly loaded (including each segment's place)."""
+    return (
+        db.query(NovelChapter)
+        .options(
+            selectinload(NovelChapter.segments).selectinload(NovelSegment.place),
+        )
         .filter(NovelChapter.novel_id == novel_id)
         .order_by(NovelChapter.block_index)
         .all()

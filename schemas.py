@@ -1,10 +1,26 @@
 import re
 
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, cast
 
-from models import NovelChapter, NovelSegment, SegmentTheme
+from models import Novel, NovelChapter, NovelSegment, SegmentTheme
 from queries import RandomSegmentsRow, SimilarRow
+
+
+class NovelResponse(BaseModel):
+    @staticmethod
+    def from_row(novel: Novel) -> "NovelResponse":
+        return NovelResponse(
+            id=novel.id,
+            title=novel.title,
+            author=novel.author,
+            publication_year=novel.publication_year,
+        )
+
+    id: int
+    title: str
+    author: str
+    publication_year: Optional[int]
 
 
 class ChapterResponse(BaseModel):
@@ -19,6 +35,45 @@ class ChapterResponse(BaseModel):
     id: int
     title: str
     block_index: int
+
+
+class ChapterDetailResponse(BaseModel):
+    @staticmethod
+    def from_row(chapter: NovelChapter) -> "ChapterDetailResponse":
+        segments = chapter.segments
+        first_segment = cast(
+            NovelSegment,
+            min(segments, key=lambda s: s.start_index) if segments else None,
+        )
+
+        places: list[str] = sorted(
+            {seg.place.name for seg in segments if seg.place.name != "unknown"}
+        )
+
+        return ChapterDetailResponse(
+            id=chapter.id,
+            title=chapter.title,
+            block_index=chapter.block_index,
+            opening_line=(
+                extract_opening_line(first_segment.content) if first_segment else ""
+            ),
+            first_segment_id=first_segment.id if first_segment else None,
+            places=places,
+        )
+
+    id: int
+    title: str
+    block_index: int
+    opening_line: str
+    first_segment_id: Optional[int]
+    places: list[str]
+
+
+class NovelChaptersResponse(BaseModel):
+    novel_title: str
+    author: str
+    publication_year: Optional[int]
+    chapters: list[ChapterDetailResponse]
 
 
 class SegmentThemeResponse(BaseModel):
@@ -111,16 +166,20 @@ _ABBREVIATIONS = frozenset(
 
 def extract_opening_line(content: str, max_chars: int = 200) -> str:
     """Extract the first sentence from segment content, respecting abbreviations."""
-    text = content[: max_chars * 2].replace("\n", " ").strip()
+    text = content[: max_chars * 4].replace("\n", " ").strip()
     for match in re.finditer(r"[.!?][\"'\u2019\u201d]*\s", text):
         end = match.end()
         before_punct = text[: match.start()].split()
-        if before_punct and before_punct[-1].lower() in _ABBREVIATIONS:
+        if before_punct and before_punct[-1].lower() + "." in _ABBREVIATIONS:
             continue
         line = text[:end].strip()
         if len(line) >= 20:
             return line
-    return text[:max_chars].strip()
+    truncated = text[:max_chars]
+    last_space = truncated.rfind(" ")
+    if last_space > 0:
+        return truncated[:last_space].strip() + "\u2026"
+    return truncated.strip() + "\u2026"
 
 
 class SegmentPreview(BaseModel):
