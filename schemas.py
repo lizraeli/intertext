@@ -175,7 +175,7 @@ def extract_opening_line(content: str, max_chars: int = 200) -> str:
     for match in re.finditer(r"[.!?][\"'\u2019\u201d]*\s", text):
         end = match.end()
         before_punct = text[: match.start()].split()
-        if before_punct and before_punct[-1].lower() in _ABBREVIATIONS:
+        if before_punct and before_punct[-1].lower() + "." in _ABBREVIATIONS:
             continue
         line = text[:end].strip()
         if len(line) >= 20:
