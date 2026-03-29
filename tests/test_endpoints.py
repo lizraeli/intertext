@@ -46,7 +46,6 @@ class TestNovelChapters:
                 "block_index": 0,
                 "opening_line": "The room was empty and the silence pressed in from every side.",
                 "first_segment_id": seg_a.id,
-                "characters": ["Alice"],
                 "places": ["a dark room"],
             },
             {
@@ -55,7 +54,6 @@ class TestNovelChapters:
                 "block_index": 1,
                 "opening_line": "Light broke through the clouds at dawn.",
                 "first_segment_id": seg_b.id,
-                "characters": ["Bob"],
                 "places": ["a hilltop"],
             },
         ]
@@ -76,7 +74,6 @@ class TestNovelChapters:
                 "block_index": 0,
                 "opening_line": "The streets were empty and silent.",
                 "first_segment_id": seg_c.id,
-                "characters": ["Clara"],
                 "places": ["an abandoned city"],
             },
         ]

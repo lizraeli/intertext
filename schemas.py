@@ -46,9 +46,6 @@ class ChapterDetailResponse(BaseModel):
             min(segments, key=lambda s: s.start_index) if segments else None,
         )
 
-        characters: list[str] = sorted(
-            {c.name for seg in segments for c in seg.characters}
-        )
         places: list[str] = sorted(
             {seg.place.name for seg in segments if seg.place.name != "unknown"}
         )
@@ -61,7 +58,6 @@ class ChapterDetailResponse(BaseModel):
                 extract_opening_line(first_segment.content) if first_segment else ""
             ),
             first_segment_id=first_segment.id if first_segment else None,
-            characters=characters,
             places=places,
         )
 
@@ -70,7 +66,6 @@ class ChapterDetailResponse(BaseModel):
     block_index: int
     opening_line: str
     first_segment_id: Optional[int]
-    characters: list[str]
     places: list[str]
 
 
