@@ -8,3 +8,6 @@ __pycache__/
 .idea/
 .history/
 .history/
+
+# script inputs
+scripts/ingest_novel_inputs.json
