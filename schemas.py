@@ -3,8 +3,24 @@ import re
 from pydantic import BaseModel
 from typing import Optional
 
-from models import NovelChapter, NovelSegment, SegmentTheme
+from models import Novel, NovelChapter, NovelSegment, SegmentTheme
 from queries import RandomSegmentsRow, SimilarRow
+
+
+class NovelResponse(BaseModel):
+    @staticmethod
+    def from_row(novel: Novel) -> "NovelResponse":
+        return NovelResponse(
+            id=novel.id,
+            title=novel.title,
+            author=novel.author,
+            publication_year=novel.publication_year,
+        )
+
+    id: int
+    title: str
+    author: str
+    publication_year: Optional[int]
 
 
 class ChapterResponse(BaseModel):

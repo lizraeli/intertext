@@ -17,6 +17,10 @@ from models import (
 from llm_schemas import ThemeAnnotation
 
 
+def query_all_novels(db: Session) -> list[Novel]:
+    return db.query(Novel).order_by(Novel.title).all()
+
+
 def query_novel_by_id(db: Session, novel_id: int) -> Novel | None:
     return db.query(Novel).filter(Novel.id == novel_id).first()
 

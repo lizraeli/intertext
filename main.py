@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from database import get_db
 from schemas import (
+    NovelResponse,
     ChapterResponse,
     SegmentResponse,
     TraversalRequest,
@@ -14,6 +15,7 @@ from schemas import (
     FullSegmentResponse,
 )
 from queries import (
+    query_all_novels,
     query_chapters_for_novel,
     query_novel_by_id,
     query_novel_segments,
@@ -37,6 +39,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.get("/api/novels", response_model=List[NovelResponse])
+def list_novels(db: Session = Depends(get_db)):
+    novels = query_all_novels(db)
+    return [NovelResponse.from_row(novel) for novel in novels]
 
 
 @app.get("/api/novels/{novel_id}/chapters", response_model=List[ChapterResponse])
