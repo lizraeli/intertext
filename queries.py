@@ -412,3 +412,8 @@ def get_novel_character_names(db: Session, novel_id: int) -> list[str]:
         db.query(NovelCharacter).filter(NovelCharacter.novel_id == novel_id).all()
     )
     return [character.name for character in novel_characters]
+
+
+def get_novel_place_names(db: Session, novel_id: int) -> list[str]:
+    novel_places = db.query(NovelPlace).filter(NovelPlace.novel_id == novel_id).all()
+    return [place.name for place in novel_places]

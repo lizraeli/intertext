@@ -9,6 +9,7 @@ from queries import (
     get_chapter_by_novel_and_block,
     get_novel_by_title,
     get_novel_character_names,
+    get_novel_place_names,
     get_or_create_characters,
     get_or_create_chapter,
     get_or_create_mood,
@@ -98,10 +99,14 @@ def ingest_book_to_db(book: BookData):
                 known_character_names = get_novel_character_names(
                     db=db, novel_id=novel_record.id
                 )
+                known_place_names = get_novel_place_names(
+                    db=db, novel_id=novel_record.id
+                )
                 chunk_metadata = extract_chunk_metadata(
                     chunk_text=chunk.text,
                     book=book,
                     known_character_names=known_character_names,
+                    known_place_names=known_place_names,
                 )
 
                 characters = get_or_create_characters(
