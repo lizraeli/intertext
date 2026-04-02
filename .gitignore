@@ -14,3 +14,6 @@ scripts/ingest_novel_inputs.json
 
 # cursor
 .cursor/
+
+# audio files
+audio/**/*.mp3
