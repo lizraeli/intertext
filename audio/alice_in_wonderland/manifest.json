@@ -1,5 +1,7 @@
 {
+  "novel_id": 78,
   "novel_slug": "alice_in_wonderland",
+  "novel_title": "Alice's Adventures in Wonderland",
   "audio_base_path": "audio/alice_in_wonderland",
   "chapters": [
     {
