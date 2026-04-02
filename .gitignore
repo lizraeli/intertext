@@ -11,3 +11,6 @@ __pycache__/
 
 # script inputs
 scripts/ingest_novel_inputs.json
+
+# cursor
+.cursor/
