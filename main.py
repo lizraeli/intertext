@@ -1,7 +1,9 @@
 import os
+from pathlib import Path
 
 from fastapi import FastAPI, Depends, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from database import get_db
 from schemas import (
@@ -40,6 +42,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+_audio_dir = Path(__file__).resolve().parent / "audio"
+if _audio_dir.is_dir():
+    app.mount("/audio", StaticFiles(directory=_audio_dir), name="audio")
 
 
 @app.get("/api/novels", response_model=List[NovelResponse])
