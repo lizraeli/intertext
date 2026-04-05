@@ -1,0 +1,1 @@
+PYTHONPATH=. python scripts/align_audio.py "$@"

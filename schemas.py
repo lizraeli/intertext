@@ -219,6 +219,13 @@ class SimilarSegmentPreview(BaseModel):
     similarity_score: float
 
 
+class WordTiming(BaseModel):
+    word: str
+    start_ms: Optional[int] = None
+    end_ms: Optional[int] = None
+    confidence: Optional[float] = None
+
+
 class FullSegmentResponse(BaseModel):
     @staticmethod
     def from_row(
@@ -237,12 +244,16 @@ class FullSegmentResponse(BaseModel):
         audio_alignment_confidence: Optional[float] = None
         audio_status: Optional[str] = None
 
+        audio_words: Optional[list[WordTiming]] = None
+
         if audio:
             audio_url = AUDIO_BASE_URL + audio.audio_key
             audio_start_ms = audio.start_ms
             audio_end_ms = audio.end_ms
             audio_alignment_confidence = audio.confidence
             audio_status = audio.status
+            if audio.words:
+                audio_words = [WordTiming(**w) for w in audio.words]
 
         return FullSegmentResponse(
             id=row.id,
@@ -266,6 +277,7 @@ class FullSegmentResponse(BaseModel):
             audio_end_ms=audio_end_ms,
             audio_alignment_confidence=audio_alignment_confidence,
             audio_status=audio_status,
+            audio_words=audio_words,
         )
 
     id: int
@@ -289,3 +301,4 @@ class FullSegmentResponse(BaseModel):
     audio_end_ms: Optional[int] = None
     audio_alignment_confidence: Optional[float] = None
     audio_status: Optional[str] = None
+    audio_words: Optional[list[WordTiming]] = None
