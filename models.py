@@ -11,7 +11,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, relationship
 from sqlalchemy.dialects.postgresql import JSONB
 from pgvector.sqlalchemy import Vector
-from typing import Any
+from typing import Any, Optional
 
 from database import Base
 
@@ -170,6 +170,28 @@ class SegmentTheme(Base):
     theme: Mapped["NovelTheme"] = relationship("NovelTheme", back_populates="segments")
 
 
+class SegmentAudio(Base):
+    """Audio alignment data for a segment (one-to-one with NovelSegment)."""
+
+    __tablename__ = "segment_audio"
+
+    segment_id = Column(
+        Integer,
+        ForeignKey("novel_segments.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    audio_key = Column(String(512), nullable=False)
+    start_ms = Column(Integer, nullable=False)
+    end_ms = Column(Integer, nullable=False)
+    confidence = Column(Float, nullable=False)
+    status = Column(String(32), nullable=False)
+    words = Column(JSONB, nullable=True)
+
+    segment: Mapped["NovelSegment"] = relationship(
+        "NovelSegment", back_populates="audio"
+    )
+
+
 class NovelSegment(Base):
     __tablename__ = "novel_segments"
 
@@ -215,5 +237,11 @@ class NovelSegment(Base):
     themes: Mapped[list["SegmentTheme"]] = relationship(
         "SegmentTheme",
         back_populates="segment",
+        cascade="all, delete-orphan",
+    )
+    audio: Mapped[Optional["SegmentAudio"]] = relationship(
+        "SegmentAudio",
+        back_populates="segment",
+        uselist=False,
         cascade="all, delete-orphan",
     )
