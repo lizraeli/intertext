@@ -171,7 +171,7 @@ class SegmentTheme(Base):
 
 
 class SegmentAudio(Base):
-    """Audio alignment data for a segment (one-to-one with NovelSegment)."""
+    """Audio alignment data for a segment"""
 
     __tablename__ = "segment_audio"
 

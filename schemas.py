@@ -229,7 +229,7 @@ class FullSegmentResponse(BaseModel):
         next_segment_id: Optional[int] = None,
     ) -> "FullSegmentResponse":
         novel = row.novel
-        audio_meta = (row.metadata_col or {}).get("audio")
+        audio = row.audio
 
         audio_url: Optional[str] = None
         audio_start_ms: Optional[int] = None
@@ -237,14 +237,12 @@ class FullSegmentResponse(BaseModel):
         audio_alignment_confidence: Optional[float] = None
         audio_status: Optional[str] = None
 
-        if audio_meta:
-            audio_key = audio_meta.get("audio_key")
-            if audio_key:
-                audio_url = AUDIO_BASE_URL + audio_key
-            audio_start_ms = audio_meta.get("start_ms")
-            audio_end_ms = audio_meta.get("end_ms")
-            audio_alignment_confidence = audio_meta.get("confidence")
-            audio_status = audio_meta.get("status")
+        if audio:
+            audio_url = AUDIO_BASE_URL + audio.audio_key
+            audio_start_ms = audio.start_ms
+            audio_end_ms = audio.end_ms
+            audio_alignment_confidence = audio.confidence
+            audio_status = audio.status
 
         return FullSegmentResponse(
             id=row.id,
