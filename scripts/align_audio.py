@@ -14,6 +14,7 @@ import time
 import unicodedata
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TypedDict
 
 from dotenv import load_dotenv
 from faster_whisper import WhisperModel
@@ -29,24 +30,38 @@ load_dotenv()
 AUDIO_DIR = Path(__file__).resolve().parent.parent / "audio"
 
 
+class ManifestChapter(TypedDict):
+    block_index: int
+    title: str
+    file: str
+
+
+class Manifest(TypedDict):
+    novel_id: int
+    novel_slug: str
+    novel_title: str
+    audio_base_path: str
+    chapters: list[ManifestChapter]
+
+
 @dataclass
 class SegmentTiming:
     segment_id: int
     start_ms: int
     end_ms: int
     confidence: float
-    words: list[WordTiming]
+    word_timings: list[WordTiming | None]
 
 
 CONFIDENCE_THRESHOLD = 0.6
 PADDING_MS = 100
 
 
-def find_manifest(novel_id: int) -> tuple[dict, Path]:
+def find_manifest(novel_id: int) -> tuple[Manifest, Path]:
     """Scan audio directories for a manifest matching the given novel_id."""
     for manifest_path in AUDIO_DIR.glob("*/manifest.json"):
         with open(manifest_path, "r") as f:
-            manifest = json.load(f)
+            manifest: Manifest = json.load(f)
         if manifest.get("novel_id") == novel_id:
             return manifest, manifest_path.parent
     raise FileNotFoundError(f"No manifest found for novel_id={novel_id} in {AUDIO_DIR}")
@@ -57,12 +72,85 @@ def normalize_text(text: str) -> str:
     text = unicodedata.normalize("NFKC", text)
     text = text.replace("\u2019", "'").replace("\u2018", "'")
     text = text.replace("\u201c", '"').replace("\u201d", '"')
-    text = text.replace("\u2014", "--").replace("\u2013", "-")
+    text = text.replace("\u2014", " -- ").replace("\u2013", " - ")
     text = re.sub(r"\s+", " ", text).strip()
     return text
 
 
-def get_ordered_segments(db, chapter_id: int) -> list[NovelSegment]:
+def normalize_for_match(word: str) -> str:
+    """Strip punctuation and lowercase for fuzzy comparison."""
+    return re.sub(r"[^\w]", "", word.lower())
+
+
+@dataclass
+class TranscribedWord:
+    word: str
+    start_ms: int
+    end_ms: int
+    confidence: float
+
+
+def align_words_to_content(
+    content: str, transcribed_words: list[TranscribedWord]
+) -> list[WordTiming | None]:
+    """
+    Greedy fuzzy-align transcribed words to whitespace-split content words.
+
+    Returns a positional array with one entry per content word: a WordTiming
+    if matched, or None if the content word had no audio counterpart.
+    """
+    normalized_content = normalize_text(content)
+    content_words = normalized_content.split()
+    # Create a list of None values for each content word
+    result: list[WordTiming | None] = [None] * len(content_words)
+
+    transcribed_idx = 0
+    for content_idx, content_word in enumerate(content_words):
+        if transcribed_idx >= len(transcribed_words):
+            break
+
+        content_normalized_word = normalize_for_match(content_word)
+        if not content_normalized_word:
+            continue
+
+        transcribed_normalized_word = normalize_for_match(
+            transcribed_words[transcribed_idx].word
+        )
+
+        # Match if equal or if one is a prefix of the other
+        if (
+            content_normalized_word == transcribed_normalized_word
+            or content_normalized_word.startswith(transcribed_normalized_word)
+            or transcribed_normalized_word.startswith(content_normalized_word)
+        ):
+            matched_word = transcribed_words[transcribed_idx]
+            result[content_idx] = WordTiming(
+                start_ms=matched_word.start_ms, end_ms=matched_word.end_ms
+            )
+            transcribed_idx += 1
+            continue
+
+        # Search ahead in transcribed words to resync after drift
+        max_lookahead = min(6, len(transcribed_words) - transcribed_idx)
+        for skip in range(1, max_lookahead):
+            candidate = normalize_for_match(transcribed_words[transcribed_idx + skip].word)
+            if (
+                content_normalized_word == candidate
+                or content_normalized_word.startswith(candidate)
+                or candidate.startswith(content_normalized_word)
+            ):
+                transcribed_idx += skip
+                matched_word = transcribed_words[transcribed_idx]
+                result[content_idx] = WordTiming(
+                    start_ms=matched_word.start_ms, end_ms=matched_word.end_ms
+                )
+                transcribed_idx += 1
+                break
+
+    return result
+
+
+def get_ordered_segments(db: Session, chapter_id: int) -> list[NovelSegment]:
     """Fetch segments for a chapter ordered by position."""
     return (
         db.query(NovelSegment)
@@ -73,52 +161,51 @@ def get_ordered_segments(db, chapter_id: int) -> list[NovelSegment]:
 
 
 def map_words_to_segments(
-    words: list[WordTiming], segments: list[NovelSegment]
+    transcribed_words: list[TranscribedWord], segments: list[NovelSegment]
 ) -> list[SegmentTiming | None]:
     """
-    Map transcribed words to segments by walking through both lists.
-
-    Each segment's normalized text is matched against consecutive words from
-    the transcript. Returns per-segment timing data.
+    Align transcribed words to segment content at the full chapter level,
+    then split the positional results back into per-segment timings.
     """
+    chapter_content = "\n\n".join(seg.content for seg in segments)
+    chapter_timings = align_words_to_content(chapter_content, transcribed_words)
+
+    chapter_words = normalize_text(chapter_content).split()
+    total_matched = sum(1 for t in chapter_timings if t is not None)
+    print(
+        f"      Chapter-level alignment: {total_matched}/{len(chapter_words)} "
+        f"content words matched ({len(transcribed_words)} transcribed words)"
+    )
+
     results: list[SegmentTiming | None] = []
-    word_idx = 0
+    offset = 0
 
     for segment in segments:
-        seg_normalized = normalize_text(segment.content).lower()
-        seg_words_approx = seg_normalized.split()
-        target_word_count = len(seg_words_approx)
+        seg_word_count = len(normalize_text(segment.content).split())
+        segment_timings = chapter_timings[offset : offset + seg_word_count]
+        offset += seg_word_count
 
-        segment_words: list[WordTiming] = []
-        matched = 0
+        timed = [t for t in segment_timings if t is not None]
+        print(
+            f"      Segment {segment.id}: {len(timed)}/{seg_word_count} words matched"
+        )
 
-        while matched < target_word_count and word_idx < len(words):
-            segment_words.append(words[word_idx])
-            matched += 1
-            word_idx += 1
-
-        if not segment_words:
+        if not timed:
             results.append(None)
             continue
 
-        timed_words = [w for w in segment_words if w.start_ms is not None]
-        if not timed_words:
-            results.append(None)
-            continue
+        start_ms = timed[0].start_ms
+        end_ms = timed[-1].end_ms
 
-        start_ms = timed_words[0].start_ms
-        end_ms = timed_words[-1].end_ms
-
-        confidences = [w.confidence for w in timed_words if w.confidence is not None]
-        avg_confidence = sum(confidences) / len(confidences) if confidences else 0.0
+        confidence = len(timed) / seg_word_count if seg_word_count > 0 else 0.0
 
         results.append(
             SegmentTiming(
                 segment_id=segment.id,
                 start_ms=start_ms,
                 end_ms=end_ms,
-                confidence=round(avg_confidence, 4),
-                words=segment_words,
+                confidence=round(confidence, 4),
+                word_timings=list(segment_timings),
             )
         )
 
@@ -173,22 +260,30 @@ def align_chapter(
     print(f"    Transcribing {audio_path.name} ({len(segments)} segments)...")
     start = time.time()
 
+    print(f"      Loading audio and running encoder...")
     whisper_segments, info = model.transcribe(
         str(audio_path),
         word_timestamps=True,
         language="en",
     )
 
-    words: list[WordTiming] = []
-    for ws in whisper_segments:
-        if ws.words:
-            for w in ws.words:
+    print(f"      Decoding with word timestamps...")
+    words: list[TranscribedWord] = []
+    chunk_count = 0
+    for segment in whisper_segments:
+        chunk_count += 1
+        word_count = len(segment.words) if segment.words else 0
+        print(
+            f"        Chunk {chunk_count}: {word_count} words ({segment.start:.1f}s - {segment.end:.1f}s)"
+        )
+        if segment.words:
+            for whisper_word in segment.words:
                 words.append(
-                    WordTiming(
-                        word=w.word.strip(),
-                        start_ms=int(w.start * 1000),
-                        end_ms=int(w.end * 1000),
-                        confidence=round(float(w.probability), 4),
+                    TranscribedWord(
+                        word=whisper_word.word.strip(),
+                        start_ms=int(whisper_word.start * 1000),
+                        end_ms=int(whisper_word.end * 1000),
+                        confidence=round(float(whisper_word.probability), 4),
                     )
                 )
 
@@ -196,13 +291,17 @@ def align_chapter(
 
     elapsed = time.time() - start
     print(
-        f"    Transcription done in {elapsed:.1f}s ({len(words)} words, {chapter_duration_ms}ms duration)"
+        f"      Transcription done in {elapsed:.1f}s ({len(words)} words, {chapter_duration_ms}ms duration)"
     )
 
-    print(f"    Mapping words to {len(segments)} segments...")
+    print(f"    Aligning words to {len(segments)} segments...")
     timings = map_words_to_segments(words, segments)
     postprocess_boundaries(timings, chapter_duration_ms)
 
+    matched_count = sum(1 for t in timings if t is not None)
+    print(f"      Matched {matched_count}/{len(segments)} segments")
+
+    print(f"    Writing to database...")
     aligned_count = 0
     for timing in timings:
         if timing is None:
@@ -211,7 +310,10 @@ def align_chapter(
         status = (
             "aligned" if timing.confidence >= CONFIDENCE_THRESHOLD else "low_confidence"
         )
-        words_json = [w.model_dump() for w in timing.words]
+        words_json = [
+            timing.model_dump() if timing is not None else None
+            for timing in timing.word_timings
+        ]
 
         existing = (
             db.query(SegmentAudio)
@@ -243,7 +345,7 @@ def align_chapter(
     print(f"    Wrote {aligned_count} segment_audio rows.")
 
 
-def validate_manifest(db, manifest: dict, audio_dir: Path):
+def validate_manifest(db: Session, manifest: Manifest, audio_dir: Path):
     """Run pre-alignment validation checks."""
     novel = query_novel_by_id(db, manifest["novel_id"])
     if not novel:
@@ -269,12 +371,12 @@ def validate_manifest(db, manifest: dict, audio_dir: Path):
     if missing_in_manifest:
         print(f"  WARNING: DB chapters {missing_in_manifest} not listed in manifest.")
 
-    for ch in manifest["chapters"]:
-        audio_path = audio_dir / ch["file"]
+    for chapter in manifest["chapters"]:
+        audio_path = audio_dir / chapter["file"]
         if not audio_path.exists():
             raise FileNotFoundError(f"Audio file not found: {audio_path}")
 
-    return novel, {ch.block_index: ch for ch in db_chapters}
+    return novel, {chapter.block_index: chapter for chapter in db_chapters}
 
 
 @dataclass
