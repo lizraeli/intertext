@@ -3,7 +3,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, Depends, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from database import get_db
 from schemas import (
@@ -44,8 +44,16 @@ app.add_middleware(
 )
 
 _audio_dir = Path(__file__).resolve().parent / "audio"
-if _audio_dir.is_dir():
-    app.mount("/audio", StaticFiles(directory=_audio_dir), name="audio")
+
+
+@app.get("/audio/{file_path:path}")
+def serve_audio(file_path: str):
+    full_path = _audio_dir / file_path
+    if not full_path.resolve().is_relative_to(_audio_dir.resolve()):
+        raise HTTPException(status_code=403, detail="Forbidden")
+    if not full_path.is_file():
+        raise HTTPException(status_code=404, detail="Audio file not found")
+    return FileResponse(full_path, media_type="audio/mpeg")
 
 
 @app.get("/api/novels", response_model=List[NovelResponse])
