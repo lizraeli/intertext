@@ -3,6 +3,8 @@
   "novel_slug": "alice_in_wonderland",
   "novel_title": "Alice's Adventures in Wonderland",
   "audio_base_path": "audio/alice_in_wonderland",
+  "source_url": "https://librivox.org/alices-adventures-in-wonderland-by-lewis-carroll/",
+  "reader": "Kristin LeMoine",
   "chapters": [
     {
       "block_index": 0,
