@@ -47,6 +47,10 @@ def extract_chunk_metadata(
         response_format=ChunkMetadata,
         temperature=0.4,
     )
+
+    if completion.choices[0].message.parsed is None:
+        raise ValueError("Failed to parse chunk metadata")
+
     return completion.choices[0].message.parsed
 
 

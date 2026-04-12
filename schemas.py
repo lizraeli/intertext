@@ -253,7 +253,7 @@ class FullSegmentResponse(BaseModel):
             audio_alignment_confidence = audio.confidence
             audio_status = audio.status
             if audio.words:
-                word_timings = [WordTiming(**w) for w in audio.words]
+                word_timings = [WordTiming(**word) for word in audio.words]
 
         return FullSegmentResponse(
             id=row.id,

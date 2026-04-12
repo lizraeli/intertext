@@ -1,4 +1,4 @@
-from typing import Any, Optional, Protocol, Sequence
+from typing import Any, Optional, Protocol, Sequence, cast
 
 from sqlalchemy.orm import Session, selectinload
 from sqlalchemy.sql.expression import func
@@ -125,11 +125,14 @@ class RandomSegmentsRow(Protocol):
 
 
 def query_random_segments(db: Session, count: int) -> Sequence[RandomSegmentsRow]:
-    return (
-        db.query(NovelSegment.id, NovelSegment.content, NovelSegment.metadata_col)
-        .order_by(func.random())
-        .limit(count)
-        .all()
+    return cast(
+        Sequence[RandomSegmentsRow],
+        (
+            db.query(NovelSegment.id, NovelSegment.content, NovelSegment.metadata_col)
+            .order_by(func.random())
+            .limit(count)
+            .all()
+        ),
     )
 
 
