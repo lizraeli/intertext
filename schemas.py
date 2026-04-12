@@ -1,3 +1,4 @@
+import os
 import re
 
 from pydantic import BaseModel
@@ -5,6 +6,8 @@ from typing import Optional, cast
 
 from models import Novel, NovelChapter, NovelSegment, SegmentTheme
 from queries import RandomSegmentsRow, SimilarRow
+
+AUDIO_BASE_URL = os.getenv("AUDIO_BASE_URL", "http://localhost:8000/audio/")
 
 
 class NovelResponse(BaseModel):
@@ -216,6 +219,13 @@ class SimilarSegmentPreview(BaseModel):
     similarity_score: float
 
 
+class WordTiming(BaseModel):
+    char_start: int
+    char_end: int
+    start_ms: int
+    end_ms: int
+
+
 class FullSegmentResponse(BaseModel):
     @staticmethod
     def from_row(
@@ -226,6 +236,24 @@ class FullSegmentResponse(BaseModel):
         next_segment_id: Optional[int] = None,
     ) -> "FullSegmentResponse":
         novel = row.novel
+        audio = row.audio
+
+        audio_url: Optional[str] = None
+        audio_start_ms: Optional[int] = None
+        audio_end_ms: Optional[int] = None
+        audio_alignment_confidence: Optional[float] = None
+        audio_status: Optional[str] = None
+
+        word_timings: Optional[list[WordTiming]] = None
+
+        if audio:
+            audio_url = AUDIO_BASE_URL + audio.audio_key
+            audio_start_ms = audio.start_ms
+            audio_end_ms = audio.end_ms
+            audio_alignment_confidence = audio.confidence
+            audio_status = audio.status
+            if audio.words:
+                word_timings = [WordTiming(**w) for w in audio.words]
 
         return FullSegmentResponse(
             id=row.id,
@@ -244,6 +272,12 @@ class FullSegmentResponse(BaseModel):
             next_segment_id=next_segment_id,
             segment_index=segment_index,
             chapter_segment_count=chapter_segment_count,
+            audio_url=audio_url,
+            audio_start_ms=audio_start_ms,
+            audio_end_ms=audio_end_ms,
+            audio_alignment_confidence=audio_alignment_confidence,
+            audio_status=audio_status,
+            word_timings=word_timings,
         )
 
     id: int
@@ -262,3 +296,9 @@ class FullSegmentResponse(BaseModel):
     next_segment_id: Optional[int] = None
     segment_index: int = 1
     chapter_segment_count: int = 1
+    audio_url: Optional[str] = None
+    audio_start_ms: Optional[int] = None
+    audio_end_ms: Optional[int] = None
+    audio_alignment_confidence: Optional[float] = None
+    audio_status: Optional[str] = None
+    word_timings: Optional[list[WordTiming]] = None

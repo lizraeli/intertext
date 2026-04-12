@@ -63,3 +63,5 @@ typing_extensions==4.15.0
 uvicorn==0.41.0
 pytest==9.0.2
 tiktoken==0.12.0
+faster-whisper==1.2.1
+ctc-forced-aligner @ git+https://github.com/MahmoudAshraf97/ctc-forced-aligner.git@e23e1525bae810f0582b6e539ce7aec63fd01196

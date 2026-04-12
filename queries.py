@@ -12,6 +12,7 @@ from models import (
     NovelPlace,
     NovelSegment,
     NovelTheme,
+    SegmentAudio,
     SegmentTheme,
 )
 from llm_schemas import ThemeAnnotation
@@ -142,6 +143,7 @@ def query_segment_by_id(db: Session, segment_id: int) -> NovelSegment | None:
             selectinload(NovelSegment.chapter),
             selectinload(NovelSegment.themes).selectinload(SegmentTheme.theme),
             selectinload(NovelSegment.novel),
+            selectinload(NovelSegment.audio),
         )
         .join(Novel, NovelSegment.novel_id == Novel.id)
         .filter(NovelSegment.id == segment_id)
