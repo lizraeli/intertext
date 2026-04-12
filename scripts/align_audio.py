@@ -1,5 +1,5 @@
 """
-Align chapter audio to segment boundaries using CTC forced alignment.
+Align chapter audio to segment boundaries using forced alignment.
 
 Usage:
     bash scripts/align_audio.sh --novel-id 78
@@ -106,8 +106,13 @@ def tokenize_content(content: str) -> list[ContentToken]:
 
 
 def clean_word_for_alignment(word: str) -> str:
-    """Strip everything except letters and apostrophes for CTC alignment."""
+    """Strip everything except letters and apostrophes for alignment."""
     return re.sub(r"[^a-zA-Z']", "", word).lower()
+
+
+def segment_has_alignable_words(content: str) -> bool:
+    """True if the segment has at least one token that contributes to forced alignment."""
+    return any(clean_word_for_alignment(t.word_text) for t in tokenize_content(content))
 
 
 def align_chapter_text(
@@ -116,7 +121,7 @@ def align_chapter_text(
     audio_waveform: torch.Tensor,
     chapter_content: str,
 ) -> list[WordTiming]:
-    """Use CTC forced alignment to produce word-level timestamps for chapter content.
+    """Use forced alignment to produce word-level timestamps for chapter content.
 
     Tokenizes the content, cleans words for the aligner, runs forced alignment,
     and maps the resulting timestamps back to character offsets in the original content.
@@ -298,13 +303,25 @@ def align_chapter(
         return
 
     if not force:
+        segments_with_words = [
+            seg for seg in segments if segment_has_alignable_words(seg.content)
+        ]
+        if not segments_with_words:
+            print("    No alignable words in this chapter, skipping.")
+            return
+
         existing_count = (
             db.query(SegmentAudio)
-            .filter(SegmentAudio.segment_id.in_([s.id for s in segments]))
+            .filter(
+                SegmentAudio.segment_id.in_([seg.id for seg in segments_with_words])
+            )
             .count()
         )
-        if existing_count == len(segments):
-            print(f"    Already aligned ({existing_count} segments), skipping.")
+
+        if existing_count == len(segments_with_words):
+            print(
+                f"    Already aligned ({existing_count} segments with words), skipping."
+            )
             return
 
     print(f"    Aligning {audio_path.name} ({len(segments)} segments)...")
