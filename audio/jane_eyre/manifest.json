@@ -1,0 +1,162 @@
+{
+  "novel_id": 77,
+  "novel_slug": "jane_eyre",
+  "novel_title": "Jane Eyre",
+  "audio_base_path": "audio/jane_eyre",
+  "source_url": "https://librivox.org/jane-eyre-version-3-by-charlotte-bronte/",
+  "reader": "Elizabeth Klett",
+  "chapters": [
+    {
+      "block_index": 0,
+      "file": "janeeyre_01_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 1,
+      "file": "janeeyre_02_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 2,
+      "file": "janeeyre_03_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 3,
+      "file": "janeeyre_04_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 4,
+      "file": "janeeyre_05_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 5,
+      "file": "janeeyre_06_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 6,
+      "file": "janeeyre_07_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 7,
+      "file": "janeeyre_08_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 8,
+      "file": "janeeyre_09_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 9,
+      "file": "janeeyre_10_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 10,
+      "file": "janeeyre_11_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 11,
+      "file": "janeeyre_12_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 12,
+      "file": "janeeyre_13_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 13,
+      "file": "janeeyre_14_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 14,
+      "file": "janeeyre_15_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 15,
+      "file": "janeeyre_16_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 16,
+      "file": "janeeyre_17_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 17,
+      "file": "janeeyre_18_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 18,
+      "file": "janeeyre_19_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 19,
+      "file": "janeeyre_20_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 20,
+      "file": "janeeyre_21_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 21,
+      "file": "janeeyre_22_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 22,
+      "file": "janeeyre_23_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 23,
+      "file": "janeeyre_24_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 24,
+      "file": "janeeyre_25_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 25,
+      "file": "janeeyre_26_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 26,
+      "file": "janeeyre_27_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 27,
+      "file": "janeeyre_28_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 28,
+      "file": "janeeyre_29_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 29,
+      "file": "janeeyre_30_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 30,
+      "file": "janeeyre_31_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 31,
+      "file": "janeeyre_32_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 32,
+      "file": "janeeyre_33_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 33,
+      "file": "janeeyre_34_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 34,
+      "file": "janeeyre_35_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 35,
+      "file": "janeeyre_36_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 36,
+      "file": "janeeyre_37_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 37,
+      "file": "janeeyre_38_bronte_64kb.mp3"
+    }
+  ]
+}

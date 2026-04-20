@@ -40,8 +40,8 @@ SAMPLING_FREQ = 16000
 
 
 class ManifestChapter(TypedDict):
+    chapter: int
     block_index: int
-    title: str
     file: str
 
 
@@ -126,8 +126,10 @@ def align_chapter_text(
     Tokenizes the content, cleans words for the aligner, runs forced alignment,
     and maps the resulting timestamps back to character offsets in the original content.
     """
+    print("      Tokenizing content...")
     content_tokens = tokenize_content(chapter_content)
 
+    print("      Cleaning words for alignment...")
     alignable_tokens: list[ContentToken] = []
     clean_words: list[str] = []
     for token in content_tokens:
@@ -146,20 +148,26 @@ def align_chapter_text(
 
     clean_text = " ".join(clean_words)
 
+    print("      Preprocessing text...")
     tokens_starred, text_starred = preprocess_text(
         clean_text, romanize=True, language="eng"
     )
 
+    print("      Generating emissions...")
     emissions, stride = generate_emissions(model, audio_waveform, batch_size=4)
 
+    print("      Getting alignments...")
     segments, scores, blank_token = get_alignments(
         emissions=emissions, tokens=tokens_starred, tokenizer=tokenizer
     )
 
+    print("      Getting spans...")
     spans = get_spans(tokens=tokens_starred, segments=segments, blank=blank_token)
 
+    print("      Postprocessing results...")
     word_timestamps = postprocess_results(text_starred, spans, stride, scores)
 
+    print("      Fixing preamble outliers...")
     result: list[WordTiming] = []
     for i, word_ts in enumerate(word_timestamps):
         if i >= len(alignable_tokens):
@@ -484,7 +492,7 @@ def main():
             audio_path = audio_dir / ch_info["file"]
             audio_key = f"{novel_slug}/{ch_info['file']}"
 
-            print(f"\n  Chapter {block_index}: {ch_info['title']}")
+            print(f"\n  Chapter {block_index}")
             print(f"    Audio path: {audio_path}")
             align_chapter(
                 db, model, tokenizer, db_chapter, audio_path, audio_key, args.force

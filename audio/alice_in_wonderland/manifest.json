@@ -3,67 +3,55 @@
   "novel_slug": "alice_in_wonderland",
   "novel_title": "Alice's Adventures in Wonderland",
   "audio_base_path": "audio/alice_in_wonderland",
-  "source_url": "https://librivox.org/alices-adventures-in-wonderland-by-lewis-carroll/",
-  "reader": "Kristin LeMoine",
+  "source_url": "https://librivox.org/alices-adventures-in-wonderland-by-lewis-carroll-4/",
+  "reader": "Kara Shallenberg",
   "chapters": [
     {
       "block_index": 0,
-      "title": "CHAPTER I. Down the Rabbit-Hole",
       "file": "chapter_001.mp3"
     },
     {
       "block_index": 1,
-      "title": "CHAPTER II. The Pool of Tears",
       "file": "chapter_002.mp3"
     },
     {
       "block_index": 2,
-      "title": "CHAPTER III. A Caucus-Race and a Long Tale",
       "file": "chapter_003.mp3"
     },
     {
       "block_index": 3,
-      "title": "CHAPTER IV. The Rabbit Sends in a Little Bill",
       "file": "chapter_004.mp3"
     },
     {
       "block_index": 4,
-      "title": "CHAPTER V. Advice from a Caterpillar",
       "file": "chapter_005.mp3"
     },
     {
       "block_index": 5,
-      "title": "CHAPTER VI. Pig and Pepper",
       "file": "chapter_006.mp3"
     },
     {
       "block_index": 6,
-      "title": "CHAPTER VII. A Mad Tea-Party",
       "file": "chapter_007.mp3"
     },
     {
       "block_index": 7,
-      "title": "CHAPTER VIII. The Queen’s Croquet-Ground",
       "file": "chapter_008.mp3"
     },
     {
       "block_index": 8,
-      "title": "CHAPTER IX. The Mock Turtle’s Story",
       "file": "chapter_009.mp3"
     },
     {
       "block_index": 9,
-      "title": "CHAPTER X. The Lobster Quadrille",
       "file": "chapter_010.mp3"
     },
     {
       "block_index": 10,
-      "title": "CHAPTER XI. Who Stole the Tarts?",
       "file": "chapter_011.mp3"
     },
     {
       "block_index": 11,
-      "title": "CHAPTER XII. Alice’s Evidence",
       "file": "chapter_012.mp3"
     }
   ]
