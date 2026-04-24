@@ -247,7 +247,7 @@ class FullSegmentResponse(BaseModel):
         word_timings: Optional[list[WordTiming]] = None
 
         if audio:
-            audio_url = AUDIO_BASE_URL + audio.audio_key
+            audio_url = f"{AUDIO_BASE_URL}/{audio.audio_key}"
             audio_start_ms = audio.start_ms
             audio_end_ms = audio.end_ms
             audio_alignment_confidence = audio.confidence
