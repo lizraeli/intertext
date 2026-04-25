@@ -4,13 +4,15 @@ Ingests novels into a PostgreSQL database (Supabase) with vector embeddings for 
 
 ## Setup
 
-1. Create a virtual environment and install dependencies:
+1. Create a virtual environment and install local dependencies:
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
+
+`requirements.txt` installs the full local toolchain through `requirements-local.txt`, so the same virtual environment can run the API server, ingestion scripts, alignment scripts, migrations, and tests. Render uses `requirements-api.txt` instead, which excludes local-only ML/audio dependencies.
 
 2. Copy `.env.example` to `.env` and fill in the values:
 
@@ -23,7 +25,11 @@ cp .env.example .env
 - `OPENAI_API_KEY` — used for embeddings and metadata extraction
 - `HF_TOKEN` — Hugging Face token (for downloading alignment models)
 - `FRONTEND_URL` — frontend origin for CORS (defaults to `http://localhost:5173`)
-- `AUDIO_BASE_URL` — base URL for serving audio files (defaults to `http://localhost:8000/audio/`)
+- `AUDIO_BASE_URL` — base URL for serving audio files (defaults to `http://localhost:8000/audio`; use your Cloudflare R2 public/custom-domain URL in production)
+- `R2_BUCKET` — Cloudflare R2 bucket name for local MP3 uploads
+- `R2_ACCOUNT_ID` — Cloudflare account ID used to build the R2 endpoint
+- `R2_ENDPOINT_URL` — optional explicit R2 endpoint URL
+- `AWS_PROFILE` — optional AWS CLI profile to use for R2 uploads
 
 3. Run database migrations:
 
@@ -79,6 +85,16 @@ Options:
 
 The script loads the Wav2Vec2 model, performs forced alignment of chapter audio against segment text, and writes word-level timings (`char_start`, `char_end`, `start_ms`, `end_ms`) to the database. A post-alignment heuristic corrects words that may have been misaligned to preamble audio (e.g. LibriVox intros).
 
+### Uploading audio to Cloudflare R2
+
+After adding new MP3 files locally, sync them to R2:
+
+```bash
+bash scripts/upload_audio_to_r2.sh
+```
+
+The script uses `aws s3 sync` against Cloudflare R2, so repeated runs upload only new or changed MP3 files under `audio/`. It reads `R2_BUCKET`, `R2_ACCOUNT_ID`, `R2_ENDPOINT_URL`, and `AWS_PROFILE` from the shell environment or `.env`. Configure Cloudflare R2 access keys in the AWS CLI before running it.
+
 ## Database Migrations
 
 After changing `models.py`, generate and apply a migration:
@@ -108,3 +124,19 @@ Endpoints:
 - `GET /api/segments/{segment_id}/similar?limit=3` — similar segments by embedding similarity
 - `POST /api/segments/similar` — find segments similar to a given embedding vector
 - `GET /audio/{file_path}` — serves audio files from the `audio/` directory
+
+## Deployment
+
+The API is configured for Render in `render.yaml`. Render installs only `requirements-api.txt` and starts the server with:
+
+```bash
+uvicorn main:app --host 0.0.0.0 --port $PORT
+```
+
+Set these Render environment variables:
+
+- `DATABASE_URL` — production Supabase PostgreSQL connection string
+- `FRONTEND_URL` — deployed frontend origin for CORS
+- `AUDIO_BASE_URL` — Cloudflare R2 public/custom-domain base URL for MP3 files
+
+Keep ingestion, alignment, migrations, and R2 uploads local. Do not add `OPENAI_API_KEY`, `HF_TOKEN`, or R2 write credentials to Render unless the deployed API needs them later.

@@ -7,7 +7,7 @@ from typing import Optional, cast
 from models import Novel, NovelChapter, NovelSegment, SegmentTheme
 from queries import RandomSegmentsRow, SimilarRow
 
-AUDIO_BASE_URL = os.getenv("AUDIO_BASE_URL", "http://localhost:8000/audio/")
+AUDIO_BASE_URL = os.getenv("AUDIO_BASE_URL", "http://localhost:8000/audio").rstrip("/")
 
 
 class NovelResponse(BaseModel):
