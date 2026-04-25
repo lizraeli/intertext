@@ -1,6 +1,18 @@
 # Intertext Backend
 
-Ingests novels into a PostgreSQL database (Supabase) with vector embeddings for similarity search. Splits text into semantically coherent segments, extracts literary metadata via OpenAI, stores embeddings for retrieval, and supports audio narration with word-level alignment.
+Intertext is a literary exploration app for moving through novels by passage, mood, theme, similarity, and narration. Readers can browse a library of public-domain texts, open individual segments, jump to semantically related passages, and listen to aligned audio narration with word-level timing.
+
+This repository contains the Python/FastAPI backend. It ingests novel markdown files into Supabase Postgres, splits chapters into semantically coherent segments, extracts literary metadata with OpenAI, stores vector embeddings for similarity search, and serves the API used by the frontend. Audio alignment and ingestion are run locally; production audio files are served from Cloudflare R2.
+
+The frontend lives in [lizraeli/intertext-frontend](https://github.com/lizraeli/intertext-frontend).
+
+## Architecture
+
+- **API**: FastAPI endpoints for novels, chapters, segments, similar passages, and audio metadata.
+- **Database**: Supabase Postgres with pgvector for embedding similarity search.
+- **Ingestion pipeline**: Local scripts for parsing books, chunking text, extracting metadata, generating embeddings, and writing rows to the database.
+- **Audio pipeline**: Local forced-alignment scripts that map chapter MP3s to segment-level and word-level timings.
+- **Audio storage**: Cloudflare R2 stores MP3 files; the API returns R2-backed `audio_url` values to the frontend.
 
 ## Setup
 
