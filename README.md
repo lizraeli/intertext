@@ -95,6 +95,8 @@ bash scripts/upload_audio_to_r2.sh
 
 The script uses `aws s3 sync` against Cloudflare R2, so repeated runs upload only new or changed MP3 files under `audio/`. It reads `R2_BUCKET`, `R2_ACCOUNT_ID`, `R2_ENDPOINT_URL`, and `AWS_PROFILE` from the shell environment or `.env`. Configure Cloudflare R2 access keys in the AWS CLI before running it.
 
+`AUDIO_BASE_URL` should be the public base URL for the bucket, not the authenticated R2 S3 endpoint. For example, if a segment has `audio_key = jane_eyre/chapter_001.mp3`, then `https://<public-audio-domain>/jane_eyre/chapter_001.mp3` should load directly in a browser.
+
 ## Database Migrations
 
 After changing `models.py`, generate and apply a migration:
@@ -135,8 +137,17 @@ uvicorn main:app --host 0.0.0.0 --port $PORT
 
 Set these Render environment variables:
 
-- `DATABASE_URL` — production Supabase PostgreSQL connection string
-- `FRONTEND_URL` — deployed frontend origin for CORS
-- `AUDIO_BASE_URL` — Cloudflare R2 public/custom-domain base URL for MP3 files
+- `DATABASE_URL` — Supabase pooler connection string. The direct `db.<project>.supabase.co:5432` URL may resolve to IPv6 and fail from Render.
+- `FRONTEND_URL` — deployed frontend origin for CORS, e.g. `https://frontend-domain.com`
+- `AUDIO_BASE_URL` — Cloudflare R2 public/custom-domain base URL for MP3 files, e.g. `https://pub-xxx.r2.dev`
 
 Keep ingestion, alignment, migrations, and R2 uploads local. Do not add `OPENAI_API_KEY`, `HF_TOKEN`, or R2 write credentials to Render unless the deployed API needs them later.
+
+## Production Checklist
+
+- Run migrations locally against the production Supabase database.
+- Upload MP3 files to R2 with `bash scripts/upload_audio_to_r2.sh`.
+- Confirm R2 public URLs load in a browser.
+- Deploy the API to Render with `render.yaml`.
+- Set Render `DATABASE_URL`, `FRONTEND_URL`, and `AUDIO_BASE_URL`.
+- Deploy the frontend with its API base URL pointing to the Render backend.
