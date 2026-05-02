@@ -1,8 +1,8 @@
 # Intertext Backend
 
-Intertext is a literary exploration app for moving through novels by passage, mood, theme, similarity, and narration. Readers can browse a library of public-domain texts, open individual segments, jump to semantically related passages, and listen to aligned audio narration with word-level timing.
+Intertext is a literary exploration app for moving through novels by passage, mood, theme, similarity, and narration. Readers can browse a library of public-domain texts, open individual segments, jump to semantically related passages, and listen to aligned audio narration.
 
-This repository contains the Python/FastAPI backend. It ingests novel markdown files into Supabase Postgres, splits chapters into semantically coherent segments, extracts literary metadata with OpenAI, stores vector embeddings for similarity search, and serves the API used by the frontend. Audio alignment and ingestion are run locally; production audio files are served from Cloudflare R2.
+This repository contains the Python/FastAPI backend. It ingests markdown files into Supabase Postgres, splits chapters into semantic segments, extracts literary metadata with OpenAI, stores vector embeddings for similarity search, and serves the API. Audio alignment and ingestion are run locally; production audio files are served from Cloudflare R2.
 
 The frontend lives in [lizraeli/intertext-frontend](https://github.com/lizraeli/intertext-frontend).
 
@@ -10,8 +10,8 @@ The frontend lives in [lizraeli/intertext-frontend](https://github.com/lizraeli/
 
 - **API**: FastAPI endpoints for novels, chapters, segments, similar passages, and audio metadata.
 - **Database**: Supabase Postgres with pgvector for embedding similarity search.
-- **Ingestion pipeline**: Local scripts for parsing books, chunking text, extracting metadata, generating embeddings, and writing rows to the database.
-- **Audio pipeline**: Local forced-alignment scripts that map chapter MP3s to segment-level and word-level timings.
+- **Text Ingestion**: Local scripts for parsing books, chunking text, extracting metadata, generating embeddings, and writing rows to the database.
+- **Audio Alignment**: Local forced-alignment scripts that map chapter MP3s to segment-level and word-level timings.
 - **Audio storage**: Cloudflare R2 stores MP3 files; the API returns R2-backed `audio_url` values to the frontend.
 
 ## Setup
@@ -79,11 +79,11 @@ Deletes the novel and all associated segments.
 
 ## Audio Narration
 
-Audio narration uses chapter-level MP3 recordings aligned to text segments using CTC forced alignment (`ctc-forced-aligner`). The pipeline produces word-level timestamps stored in the `segment_audio` table.
+Audio narration uses chapter-level MP3 recordings aligned to text segments using CTC forced alignment (`ctc-forced-aligner`). This produces word-level timestamps which are stored in the `segment_audio` table.
 
 ### Audio assets
 
-Audio files live in `audio/<novel_slug>/` with a `manifest.json` mapping chapters to MP3 files. See `audio/README.md` for the folder structure and how to add audio for a new novel. MP3 files are gitignored; manifests are tracked.
+Audio files live in `audio/<novel_slug>/` with a `manifest.json` mapping chapters to MP3 files. See `audio/README.md` for the folder structure and how to add audio for a new novel. Manifests are tracked while MP3 files are gitignored.
 
 ### Running alignment
 
@@ -153,7 +153,7 @@ Set these Render environment variables:
 - `FRONTEND_URL` — deployed frontend origin for CORS, e.g. `https://frontend-domain.com`
 - `AUDIO_BASE_URL` — Cloudflare R2 public/custom-domain base URL for MP3 files, e.g. `https://pub-xxx.r2.dev`
 
-Keep ingestion, alignment, migrations, and R2 uploads local. Do not add `OPENAI_API_KEY`, `HF_TOKEN`, or R2 write credentials to Render unless the deployed API needs them later.
+We keep ingestion, alignment, migrations, and R2 uploads local. Do not add `OPENAI_API_KEY`, `HF_TOKEN`, or R2 write credentials to Render unless the deployed API needs them later.
 
 ## Production Checklist
 
