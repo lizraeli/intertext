@@ -1,8 +1,8 @@
 # Intertext Backend
 
-Intertext is a literary exploration app for moving through novels by passage, mood, theme, similarity, and narration. Readers can browse a library of public-domain texts, open individual segments, jump to semantically related passages, and listen to aligned audio narration.
+Intertext is a literary exploration app for moving through novels by passage, mood, theme, similarity, and narration. Readers can browse a collection of public-domain texts, open individual segments, jump to semantically related passages, and listen to aligned audio narration.
 
-This repository contains the Python/FastAPI backend. It ingests markdown files into Supabase Postgres, splits chapters into semantic segments, extracts literary metadata with OpenAI, stores vector embeddings for similarity search, and serves the API. Audio alignment and ingestion are run locally; production audio files are served from Cloudflare R2.
+This repository contains the Python/FastAPI backend. It ingests markdown files into Supabase Postgres, splits chapters into semantic segments, extracts literary metadata with OpenAI, stores vector embeddings for similarity search, and serves the API. Audio alignment and ingestion are run locally. In production, audio files are served from Cloudflare R2.
 
 The frontend lives in [lizraeli/intertext-frontend](https://github.com/lizraeli/intertext-frontend).
 
