@@ -1,0 +1,146 @@
+{
+  "novel_id": 81,
+  "novel_slug": "wuthering_heights",
+  "novel_title": "Wuthering Heights",
+  "audio_base_path": "audio/wuthering_heights",
+  "source_url": "https://librivox.org/wuthering-heights-by-emily-bronte-2/",
+  "reader": "Ruth Golding",
+  "chapters": [
+    {
+      "block_index": 0,
+      "file": "wutheringheights_01_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 1,
+      "file": "wutheringheights_02_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 2,
+      "file": "wutheringheights_03_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 3,
+      "file": "wutheringheights_04_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 4,
+      "file": "wutheringheights_05_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 5,
+      "file": "wutheringheights_06_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 6,
+      "file": "wutheringheights_07_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 7,
+      "file": "wutheringheights_08_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 8,
+      "file": "wutheringheights_09_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 9,
+      "file": "wutheringheights_10_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 10,
+      "file": "wutheringheights_11_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 11,
+      "file": "wutheringheights_12_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 12,
+      "file": "wutheringheights_13_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 13,
+      "file": "wutheringheights_14_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 14,
+      "file": "wutheringheights_15_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 15,
+      "file": "wutheringheights_16_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 16,
+      "file": "wutheringheights_17_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 17,
+      "file": "wutheringheights_18_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 18,
+      "file": "wutheringheights_19_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 19,
+      "file": "wutheringheights_20_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 20,
+      "file": "wutheringheights_21_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 21,
+      "file": "wutheringheights_22_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 22,
+      "file": "wutheringheights_23_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 23,
+      "file": "wutheringheights_24_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 24,
+      "file": "wutheringheights_25_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 25,
+      "file": "wutheringheights_26_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 26,
+      "file": "wutheringheights_27_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 27,
+      "file": "wutheringheights_28_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 28,
+      "file": "wutheringheights_29_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 29,
+      "file": "wutheringheights_30_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 30,
+      "file": "wutheringheights_31_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 31,
+      "file": "wutheringheights_32_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 32,
+      "file": "wutheringheights_33_bronte_64kb.mp3"
+    },
+    {
+      "block_index": 33,
+      "file": "wutheringheights_34_bronte_64kb.mp3"
+    }
+  ]
+}
