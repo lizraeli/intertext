@@ -1,0 +1,122 @@
+{
+  "novel_id": 80,
+  "novel_slug": "frankenstein",
+  "novel_title": "Frankenstein",
+  "audio_base_path": "audio/frankenstein",
+  "source_url": "https://librivox.org/frankenstein-edition-1831-by-mary-shelley-wollstonecraft/",
+  "reader": "Thomas A. Copeland",
+  "chapters": [
+    {
+      "block_index": 0,
+      "file": "frankenstein_01_shelley_64kb.mp3"
+    },
+    {
+      "block_index": 1,
+      "file": "frankenstein_02_shelley_64kb.mp3"
+    },
+    {
+      "block_index": 2,
+      "file": "frankenstein_03_shelley_64kb.mp3"
+    },
+    {
+      "block_index": 3,
+      "file": "frankenstein_04_shelley_64kb.mp3"
+    },
+    {
+      "block_index": 4,
+      "file": "frankenstein_05_shelley_64kb.mp3"
+    },
+    {
+      "block_index": 5,
+      "file": "frankenstein_06_shelley_64kb.mp3"
+    },
+    {
+      "block_index": 6,
+      "file": "frankenstein_07_shelley_64kb.mp3"
+    },
+    {
+      "block_index": 7,
+      "file": "frankenstein_08_shelley_64kb.mp3"
+    },
+    {
+      "block_index": 8,
+      "file": "frankenstein_09_shelley_64kb.mp3"
+    },
+    {
+      "block_index": 9,
+      "file": "frankenstein_10_shelley_64kb.mp3"
+    },
+    {
+      "block_index": 10,
+      "file": "frankenstein_11_shelley_64kb.mp3"
+    },
+    {
+      "block_index": 11,
+      "file": "frankenstein_12_shelley_64kb.mp3"
+    },
+    {
+      "block_index": 12,
+      "file": "frankenstein_13_shelley_64kb.mp3"
+    },
+    {
+      "block_index": 13,
+      "file": "frankenstein_14_shelley_64kb.mp3"
+    },
+    {
+      "block_index": 14,
+      "file": "frankenstein_15_shelley_64kb.mp3"
+    },
+    {
+      "block_index": 15,
+      "file": "frankenstein_16_shelley_64kb.mp3"
+    },
+    {
+      "block_index": 16,
+      "file": "frankenstein_17_shelley_64kb.mp3"
+    },
+    {
+      "block_index": 17,
+      "file": "frankenstein_18_shelley_64kb.mp3"
+    },
+    {
+      "block_index": 18,
+      "file": "frankenstein_19_shelley_64kb.mp3"
+    },
+    {
+      "block_index": 19,
+      "file": "frankenstein_20_shelley_64kb.mp3"
+    },
+    {
+      "block_index": 20,
+      "file": "frankenstein_21_shelley_64kb.mp3"
+    },
+    {
+      "block_index": 21,
+      "file": "frankenstein_22_shelley_64kb.mp3"
+    },
+    {
+      "block_index": 22,
+      "file": "frankenstein_23_shelley_64kb.mp3"
+    },
+    {
+      "block_index": 23,
+      "file": "frankenstein_24_shelley_64kb.mp3"
+    },
+    {
+      "block_index": 24,
+      "file": "frankenstein_25_shelley_64kb.mp3"
+    },
+    {
+      "block_index": 25,
+      "file": "frankenstein_26_shelley_64kb.mp3"
+    },
+    {
+      "block_index": 26,
+      "file": "frankenstein_27_shelley_64kb.mp3"
+    },
+    {
+      "block_index": 27,
+      "file": "frankenstein_28_shelley_64kb.mp3"
+    }
+  ]
+}
