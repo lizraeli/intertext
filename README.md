@@ -8,11 +8,11 @@ The frontend lives in [lizraeli/intertext-frontend](https://github.com/lizraeli/
 
 ## Architecture
 
-- **API**: FastAPI endpoints for novels, chapters, segments, similar passages, and audio metadata.
-- **Database**: Supabase Postgres with pgvector for embedding similarity search.
-- **Text Ingestion**: Local scripts for parsing books, chunking text, extracting metadata, generating embeddings, and writing rows to the database.
-- **Audio Alignment**: Local forced-alignment scripts that map chapter MP3s to segment-level and word-level timings.
-- **Audio storage**: Cloudflare R2 stores MP3 files; the API returns R2-backed `audio_url` values to the frontend.
+- FastAPI endpoints for novels, chapters, segments, similar passages, and audio.
+- Postgres database hosted on Supabase, with pgvector for embedding similarity search.
+- Text Ingestion: Chunking using chonkie, tagging characters and places using gpt-4o-mini.
+- Audio Alignment: using ctc-forced-aligner.
+- Audio storage: on Cloudflare R2.
 
 ## Setup
 
